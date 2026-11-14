@@ -23,6 +23,7 @@ Still planned: category management, saved customer addresses, payment gateway in
 - [Database model](docs/database-schema.md)
 - [Development roadmap](docs/development-roadmap.md)
 - [Code review remediation status](docs/code-review-remediation.md)
+- [Design system — Editorial Alabaster & Obsidian](docs/design-system.md)
 - [Initial requirements summary](docs/requirements.md)
 
 ## Repository structure
