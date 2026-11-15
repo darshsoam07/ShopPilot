@@ -1,8 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { flushSync } from 'react-dom';
+import { useState } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { getOrders } from './api';
+import { advanceOrderStatus, getOrders } from './api';
 
 export function OrdersPage() {
+  const client = useQueryClient();
+  const [printId, setPrintId] = useState<number>();
+  const advance = useMutation({ mutationFn: advanceOrderStatus, onSuccess: () => client.invalidateQueries({ queryKey: ['orders'] }) });
+  const stages = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
   const ordersQuery = useQuery({ queryKey: ['orders'], queryFn: getOrders });
   const [searchParams] = useSearchParams();
   const placedId = searchParams.get('placed');
@@ -17,10 +23,20 @@ export function OrdersPage() {
       {ordersQuery.data.items.length === 0 ? <div className="state-panel">You have not placed any orders yet. <Link to="/">Browse products</Link>.</div> : (
         <div className="orders-list">
           {ordersQuery.data.items.map((order) => (
-            <article className="order-card" key={order.id}>
+            <article data-print={printId === order.id} className="order-card" key={order.id}>
               <div className="order-card-heading"><div><small>ORDER #{order.id}</small><strong>{new Date(order.created_at).toLocaleString()}</strong></div><span className="order-status">{order.status}</span></div>
               <div className="order-card-items">{order.items.map((item) => <div key={item.id}><span>{item.product_name} × {item.quantity}</span><strong>₹{Number(item.line_total).toLocaleString('en-IN')}</strong></div>)}</div>
+              <p>Receipt {order.receipt_number ?? '#' + order.id} · {order.payment_method.toUpperCase()}</p>
+              <address>{Object.values(order.shipping_address).filter(Boolean).join(', ')}</address>
+              <ol className="order-stages">{stages.map((stage, index) => <li key={stage} aria-current={stage === order.status ? 'step' : undefined}
+                data-done={index <= stages.indexOf(order.status)}>{stage === 'PAID' && order.payment_method === 'cod' ? 'Pay on delivery' : stage}</li>)}</ol>
+              <p>Subtotal ₹{order.subtotal_amount ?? order.total_amount} · Shipping ₹{order.shipping_cost} · Discount ₹{order.discount_amount} {order.coupon_code}</p>
               <div className="order-total"><span>Total</span><strong>₹{Number(order.total_amount).toLocaleString('en-IN')}</strong></div>
+              <div className="receipt-actions">
+                {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && <button disabled={advance.isPending} onClick={() => advance.mutate(order.id)}>Simulate next stage</button>}
+                <button onClick={() => { flushSync(() => setPrintId(order.id)); window.print(); }}>Print receipt</button>
+                {advance.isError && advance.variables === order.id && <p role="alert">{advance.error.message}</p>}
+              </div>
             </article>
           ))}
         </div>

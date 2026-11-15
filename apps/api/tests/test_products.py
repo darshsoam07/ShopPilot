@@ -42,3 +42,24 @@ def test_cart_item_can_be_updated_and_removed(client, db_session, customer_heade
     assert removed.status_code == 200
     empty = client.get("/api/v1/cart", headers=customer_headers)
     assert empty.json()["items"] == []
+
+
+def test_catalogue_price_range_stock_and_sort(client, db_session):
+    for name, price, stock in [("High", 150, 1), ("Low", 20, 2), ("Unavailable", 60, 0), ("Premium", 300, 4)]:
+        product = add_product(db_session, name=name, slug=name.lower(), sku="DESK-" + name)
+        product.price, product.stock_quantity = price, stock
+    db_session.commit()
+    result = client.get("/api/v1/products?min_price=10&max_price=200&in_stock=true&sort=price_asc&category=desk")
+    assert result.status_code == 200
+    assert result.json()["total"] == 2
+    assert [item["name"] for item in result.json()["items"]] == ["Low", "High"]
+
+
+def test_catalog_facets_precede_pagination_and_exclude_hidden(client, db_session):
+    for name, category in [("Phone", "Mobile"), ("Tablet", "Mobile"), ("Lamp", "Lighting"), ("Hidden", "Lighting")]:
+        item = add_product(db_session, name=name, slug=name.lower(), sku=name, active=name != "Hidden")
+        item.category = category
+    db_session.commit()
+    data = client.get("/api/v1/products/catalog?categories=Mobile&page=2&page_size=1").json()
+    assert data["total"] == 2 and len(data["items"]) == 1
+    assert data["categories"] == {"Mobile": 2, "Lighting": 1}

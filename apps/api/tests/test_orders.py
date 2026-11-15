@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from app.models.product import Product
+from app.models.order import Coupon
 
 
 ADDRESS = {
@@ -42,7 +43,7 @@ def test_cart_checkout_deducts_stock_and_creates_order(client, db_session, custo
     checkout = client.post("/api/v1/orders/checkout", headers=customer_headers, json={"shipping_address": ADDRESS})
     assert checkout.status_code == 201, checkout.text
     order = checkout.json()
-    assert order["status"] == "placed"
+    assert order["status"] == "PAID"
     assert Decimal(order["total_amount"]) == Decimal("4998.00")
     assert order["items"][0]["product_name"] == "Mechanical Keyboard"
     assert order["items"][0]["quantity"] == 2
@@ -88,3 +89,40 @@ def test_customer_cannot_read_another_customers_order(client, db_session, custom
 
     response = client.get(f"/api/v1/orders/{order_id}", headers=other_headers)
     assert response.status_code == 404
+    assert client.post(f"/api/v1/orders/{order_id}/advance-status", headers=other_headers).status_code == 404
+
+
+def test_coupon_checkout_rollback_and_fulfillment(client, db_session, customer_headers):
+    product = create_product(db_session)
+    db_session.add(Coupon(code="AI20", discount_percent=20, max_discount_amount=100, min_order_amount=100))
+    db_session.commit()
+    client.post("/api/v1/cart/items", headers=customer_headers, json={"product_id": product.id, "quantity": 1})
+    orders = "/api/v1/orders"
+    quote = client.post(orders + "/validate-coupon", headers=customer_headers, json={"code": "ai20", "subtotal": 99})
+    assert not quote.json()["valid"]
+    body = {"shipping": {"full_name": "Test Buyer", "address": "12 Market Street", "city": "Meerut", "postal_code": "250001"},
+            "coupon_code": "INVALID", "payment_method": "cod"}
+    assert client.post(orders + "/checkout", headers=customer_headers, json=body).status_code == 400
+    db_session.refresh(product)
+    assert product.stock_quantity == 10
+    body["coupon_code"] = "ai20"
+    result = client.post(orders + "/checkout", headers=customer_headers, json=body)
+    assert result.status_code == 201, result.text
+    order = result.json()
+    assert order["status"] == "PROCESSING" and order["receipt_number"].startswith("SP-")
+    assert Decimal(order["total_amount"]) == Decimal("2399") and order["coupon_code"] == "AI20"
+    for expected in ["SHIPPED", "DELIVERED", "DELIVERED"]:
+        assert client.post(f"{orders}/{order['id']}/advance-status", headers=customer_headers).json()["status"] == expected
+
+
+def test_decline_then_retry_with_shipping(client, db_session, customer_headers):
+    product = create_product(db_session, stock=1)
+    client.post("/api/v1/cart/items", headers=customer_headers, json={"product_id": product.id, "quantity": 1})
+    payload = {"shipping_address": ADDRESS, "carrier": "FedEx", "simulate_failure": True}
+    assert client.post("/api/v1/orders/checkout", headers=customer_headers, json=payload).status_code == 402
+    db_session.refresh(product)
+    assert product.stock_quantity == 1
+    assert client.get("/api/v1/cart", headers=customer_headers).json()["item_count"] == 1
+    payload["simulate_failure"] = False
+    order = client.post("/api/v1/orders/checkout", headers=customer_headers, json=payload).json()
+    assert Decimal(order["total_amount"]) == product.price + Decimal("9.99")

@@ -23,7 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
       <div className="product-card-body">
         <p className="product-sku">{product.sku}</p>
-        <h3>{product.name}</h3>
+        <h3><Link to={`/products/${product.id}`}>{product.name}</Link></h3>
         <p className="product-description">{product.description}</p>
         <div className="product-card-bottom">
           <strong>₹{Number(product.price).toLocaleString('en-IN')}</strong>

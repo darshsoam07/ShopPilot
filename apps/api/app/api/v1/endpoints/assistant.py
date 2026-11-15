@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.agents import shopping_agent
+from app.schemas.assistant import AssistantQueryRequest, AssistantQueryResponse
+from app.api.deps import get_current_user, get_optional_user
 from app.db.session import get_db
 from app.models.order import Order
 from app.models.product import Product
@@ -53,3 +55,8 @@ def assistant_order_lookup(
 ):
     # The same ownership check as the standard order API; the assistant is not a privilege boundary.
     return get_order(db, current_user.id, order_id)
+
+
+@router.post("/chat", response_model=AssistantQueryResponse)
+def chat(payload: AssistantQueryRequest, db: Session = Depends(get_db), user: User | None = Depends(get_optional_user)):
+    return shopping_agent.run(db, user, payload)

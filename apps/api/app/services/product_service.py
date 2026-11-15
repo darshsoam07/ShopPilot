@@ -7,13 +7,24 @@ from app.models.product import Product
 from app.schemas.product import AdminProductCreate, AdminProductUpdate
 
 
-def list_products(db: Session, *, query: str | None = None, limit: int = 20, offset: int = 0, include_inactive: bool = False):
+def list_products(db: Session, *, query: str | None = None, limit: int = 20, offset: int = 0, include_inactive: bool = False,
+                  min_price=None, max_price=None, in_stock=False, category=None, sort="newest"):
     filters = [] if include_inactive else [Product.is_active.is_(True)]
     if query:
         term = f"%{query.strip()}%"
         filters.append(or_(Product.name.ilike(term), Product.description.ilike(term), Product.sku.ilike(term)))
+    if min_price is not None:
+        filters.append(Product.price >= min_price)
+    if max_price is not None:
+        filters.append(Product.price <= max_price)
+    if in_stock:
+        filters.append(Product.stock_quantity > 0)
+    if category:
+        filters.append(Product.sku.istartswith(category + "-", autoescape=True))
+    ordering = {"price_asc": Product.price.asc(), "price_desc": Product.price.desc(),
+                "name_asc": Product.name.asc(), "newest": Product.created_at.desc()}
     total = db.scalar(select(func.count()).select_from(Product).where(*filters)) or 0
-    items = list(db.scalars(select(Product).where(*filters).order_by(Product.created_at.desc()).limit(limit).offset(offset)).all())
+    items = list(db.scalars(select(Product).where(*filters).order_by(ordering[sort], Product.id).limit(limit).offset(offset)).all())
     return items, total
 
 

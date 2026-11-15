@@ -25,3 +25,21 @@ def test_assistant_recommendations_are_catalogue_grounded(client, db_session):
     assert payload["agent"] == "catalog-rule-based-v1"
     assert payload["total"] == 1
     assert payload["items"][0]["id"] == product.id
+
+
+def test_contextual_comparison_and_cart_permissions(client, db_session, customer_headers):
+    for name in ["Lamp", "Lantern"]:
+        db_session.add(Product(name=name, slug=name.lower(), sku=name.upper(), description=name,
+                               price=Decimal("99"), stock_quantity=2, is_active=True))
+    db_session.commit()
+    path = "/api/v1/assistant/chat"
+    body = {"message": "Compare this item", "context": {"active_product_id": 1}}
+    result = client.post(path, json=body)
+    assert result.status_code == 200
+    assert result.json()["action"]["tool_name"] == "product_qa"
+    assert [p["name"] for p in result.json()["recommended_products"]] == ["Lamp", "Lantern"]
+    body["message"] = "Add this to my cart"
+    assert client.post(path, json=body).json()["action"]["status"] == "requires_auth"
+    assert client.get("/api/v1/cart", headers=customer_headers).json()["item_count"] == 0
+    assert client.post(path, headers=customer_headers, json=body).json()["action"]["status"] == "executed"
+    assert client.get("/api/v1/cart", headers=customer_headers).json()["item_count"] == 1
