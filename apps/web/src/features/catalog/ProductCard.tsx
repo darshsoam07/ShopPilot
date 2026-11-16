@@ -1,3 +1,4 @@
+import { ProductImage } from './ProductImage';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -18,8 +19,7 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="product-card">
       <div className="product-image-wrap">
-        {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <div className="image-placeholder">Product image</div>}
-        <span className="product-tag">Curated pick</span>
+        <ProductImage url={product.image_url} name={product.name} />
       </div>
       <div className="product-card-body">
         <p className="product-sku">{product.sku}</p>

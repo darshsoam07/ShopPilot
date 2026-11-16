@@ -4,6 +4,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { useQuery } from "@tanstack/react-query";
 import { getJson } from "../../services/http";
 import { Product } from "./types";
+import { ProductImage } from "./ProductImage";
 
 interface CatalogResponse {
   items: Product[];
@@ -182,6 +183,7 @@ export const CatalogPage: React.FC = () => {
               }}
             >
               <div
+                className="category-photo"
                 style={{
                   height: "200px",
                   borderRadius: "14px",
@@ -193,11 +195,7 @@ export const CatalogPage: React.FC = () => {
                   backgroundColor: "var(--bg-elevated, #FFFFFF)",
                 }}
               >
-                <img
-                  src={cat.image}
-                  alt={cat.label}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
+                <ProductImage url={cat.image} name={cat.label} />
               </div>
               <span
                 style={{
@@ -607,22 +605,7 @@ export const CatalogPage: React.FC = () => {
                       {product.category || "Collection"}
                     </span>
 
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url.startsWith('/media/') ? (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') + product.image_url : product.image_url}
-                        alt={product.name}
-                        style={{
-                          maxWidth: "100%",
-                          maxHeight: "100%",
-                          objectFit: "contain",
-                          mixBlendMode: "multiply",
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
-                        {product.name}
-                      </span>
-                    )}
+                    <ProductImage url={product.image_url} name={product.name} />
                   </div>
 
                   {/* Card Footer */}

@@ -1,7 +1,7 @@
 import { CatalogPage } from '../features/catalog/CatalogPage';
 import { ProductDetailPage } from '../features/catalog/ProductDetailPage';
 import { AssistantDrawer } from '../components/layout/AssistantDrawer';
-import { Route, Routes } from 'react-router-dom';
+import { Link, Route, Routes } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { HomePage } from '../features/catalog/HomePage';
@@ -52,7 +52,13 @@ export default function App() {
       </main>
       <button className="copilot-trigger" onClick={() => setOpen(true)}>✦ Ask ShopPilot</button>
       <AssistantDrawer key={user?.id ?? 'guest'} isOpen={open} onClose={() => setOpen(false)} onCartUpdated={() => client.invalidateQueries({ queryKey: ['cart'] })} />
-      <footer className="site-footer"><span>© {new Date().getFullYear()} ShopPilot</span><span>Smarter shopping, thoughtfully built.</span></footer>
+      <footer className="site-footer">
+        <span>© {new Date().getFullYear()} ShopPilot</span>
+        <nav aria-label="Footer">
+          <Link to="/products">Collection</Link>
+          <Link to="/assistant">Shopping assistant</Link>
+        </nav>
+      </footer>
     </div>
   );
 }
