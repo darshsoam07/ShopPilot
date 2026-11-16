@@ -5,6 +5,7 @@ export interface CartItem {
   product: {
     id: number;
     name: string;
+    specifications?: Record<string,string>;
     sku: string;
     price: string;
     image_url: string | null;
@@ -19,3 +20,4 @@ export interface Cart {
   subtotal: string;
   updated_at: string;
 }
+

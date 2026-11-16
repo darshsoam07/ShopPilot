@@ -185,3 +185,4 @@ h1, h2, h3, p { margin-top: 0; }
 .sku-options legend { font-weight: 600; padding-bottom: .6rem; }
 .sku-options a, .delivery-choices p { padding: .65rem .85rem; border: 1px solid #d5d8df; border-radius: .6rem; }
 .sku-options a[aria-current] { background: #eaf3ff; border-color: #165ba3; }
+:root[data-theme] { --bg-ai-panel: var(--shop-panel); --border-hairline: color-mix(in srgb,var(--shop-accent) 28%,white); --cta-bg: var(--shop-accent); --cta-text: white; --accent-ai: var(--shop-accent); --text-secondary: #525456; }

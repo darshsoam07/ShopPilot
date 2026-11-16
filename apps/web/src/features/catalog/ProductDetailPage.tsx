@@ -1,3 +1,4 @@
+import { ProductReviewsSection } from "./ProductReviewsSection";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -51,6 +52,7 @@ export function ProductDetailPage({ openAssistant }: { openAssistant: () => void
       <h3>How you’ll get this item</h3><div className="delivery-choices"><p>Delivery<br/><small>Select a carrier at checkout</small></p><p>Pickup<br/><small>Unavailable</small></p></div></div>
     </article>
     <h2>Specifications</h2><dl className="spec-tiles">{Object.entries({ ...p.specifications, Category: p.category, SKU: p.sku }).map(([key,value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
+    <ProductReviewsSection key={p.id} productId={p.id} />
     {related.data?.items.some(item => item.id !== p.id) && <section><h2>More to explore</h2>
       {related.data.items.filter(item => item.id !== p.id).map(item => <p key={item.id}><Link to={'/products/' + item.id}>{item.name}</Link></p>)}</section>}
   </section>;

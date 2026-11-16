@@ -60,8 +60,9 @@ export function CheckoutPage() {
       <button disabled={place.isPending} onClick={() => setStep(2)}>Back</button> <button className="primary-button" disabled={place.isPending || (!!code && !applied?.valid)} onClick={() => place.mutate()}>Place order · ₹{total}</button>
       {place.error && <p role="alert">{place.error.message}</p>}</>}
   </div><aside className="checkout-summary"><h2>Order summary</h2><table><thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead><tbody>
-    {cart.data.items.map(item => <tr key={item.id}><td>{item.product.name}</td><td>{item.quantity}</td><td>₹{(Number(item.product.price)*item.quantity).toFixed(2)}</td></tr>)}</tbody></table>
+    {cart.data.items.map(item => <tr key={item.id}><td>{item.product.name}<small style={{display: 'block'}}>{item.product.sku} · {[item.product.specifications?.Finish, item.product.specifications?.Configuration, item.product.specifications?.Protection].filter(Boolean).join(' · ')}</small></td><td>{item.quantity}</td><td>₹{(Number(item.product.price)*item.quantity).toFixed(2)}</td></tr>)}</tbody></table>
     <p>Subtotal <strong>₹{cart.data.subtotal}</strong></p><p>Shipping · {carrier} <strong>₹{fees[carrier]}</strong></p>
     {applied?.valid && <p>Discount <strong>−₹{applied.discount_amount}</strong></p>}<p>Total <strong>₹{total}</strong></p>
     <Link to="/cart">Edit cart</Link></aside></div></section>;
 }
+

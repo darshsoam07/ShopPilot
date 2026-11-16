@@ -16,6 +16,7 @@ class CartItemUpdate(BaseModel):
 class CartProductSummary(BaseModel):
     id: int
     name: str
+    specifications: dict[str, str]
     sku: str
     price: Decimal
     image_url: str | None
@@ -43,3 +44,4 @@ class CartResponse(BaseModel):
 
 class CartMessage(BaseModel):
     message: str
+

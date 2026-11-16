@@ -19,7 +19,7 @@ def get_or_create_cart(db: Session, user_id: int) -> Cart:
     return cart
 
 
-def add_item(db: Session, user_id: int, product_id: int, quantity: int) -> Cart:
+def add_item(db: Session, user_id: int, product_id: int, quantity: int, *, commit: bool = True) -> Cart:
     product = db.scalar(select(Product).where(Product.id == product_id, Product.is_active.is_(True)))
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -37,7 +37,11 @@ def add_item(db: Session, user_id: int, product_id: int, quantity: int) -> Cart:
         db.add(CartItem(cart_id=cart.id, product_id=product_id, quantity=quantity))
     cart.updated_at = datetime.now(timezone.utc)
     try:
-        db.commit()
+        if commit:
+            db.commit()
+        else:
+            db.flush()
+            db.expire(cart, ["items"])
     except Exception:
         db.rollback()
         raise

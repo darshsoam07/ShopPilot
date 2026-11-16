@@ -25,7 +25,7 @@ export function OrdersPage() {
           {ordersQuery.data.items.map((order) => (
             <article data-print={printId === order.id} className="order-card" key={order.id}>
               <div className="order-card-heading"><div><small>ORDER #{order.id}</small><strong>{new Date(order.created_at).toLocaleString()}</strong></div><span className="order-status">{order.status}</span></div>
-              <div className="order-card-items">{order.items.map((item) => <div key={item.id}><span>{item.product_name} × {item.quantity}</span><strong>₹{Number(item.line_total).toLocaleString('en-IN')}</strong></div>)}</div>
+              <div className="order-card-items">{order.items.map((item) => <div key={item.id}><span>{item.product_name} ({item.sku}) × {item.quantity}</span><strong>₹{Number(item.line_total).toLocaleString('en-IN')}</strong></div>)}</div>
               <p>Receipt {order.receipt_number ?? '#' + order.id} · {order.payment_method.toUpperCase()}</p>
               <address>{Object.values(order.shipping_address).filter(Boolean).join(', ')}</address>
               <ol className="order-stages">{stages.map((stage, index) => <li key={stage} aria-current={stage === order.status ? 'step' : undefined}
@@ -44,3 +44,4 @@ export function OrdersPage() {
     </section>
   );
 }
+

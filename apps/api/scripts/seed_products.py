@@ -42,7 +42,7 @@ SAMPLE_PRODUCTS = [
 
 # Each configuration is a separate sellable SKU with its own stock and invoice name.
 base = SAMPLE_PRODUCTS[1]
-base.update(family="nova", brand="Nova", specifications={"Finish": "Obsidian", "Configuration": "Standard",
+base.update(image_url="/demo/nova.jpg", gallery_images=[f"/demo/nova-detail-{i}.jpg" for i in range(1, 5)], family="nova", brand="Nova", specifications={"Finish": "Obsidian", "Configuration": "Standard",
             "Protection": "None", "Fit": "Over-ear", "Connection": "Wireless", "Noise control": "Active"})
 for suffix, finish, bundle, plan, extra in [
     ("ALB", "Alabaster", "Standard", "None", 0),
@@ -61,6 +61,9 @@ def main() -> None:
         inserted = 0
         for item in SAMPLE_PRODUCTS:
             exists = db.scalar(select(Product).where(Product.sku == item["sku"]))
+            if exists and item.get("family") and not exists.gallery_images and exists.image_url in {item["image_url"], "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900"}:
+                exists.image_url = item["image_url"]
+                exists.gallery_images = item["gallery_images"]
             if exists and item.get("family") and not exists.family:
                 exists.family = item["family"]
                 exists.specifications = {**item["specifications"], **exists.specifications}
@@ -75,3 +78,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

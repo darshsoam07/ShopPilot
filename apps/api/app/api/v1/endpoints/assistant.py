@@ -11,6 +11,7 @@ from app.api.deps import get_current_user, get_optional_user
 from app.db.session import get_db
 from app.models.order import Order
 from app.models.product import Product
+from app.models.chat import ChatMessage, ChatSession
 from app.models.user import User
 from app.schemas.assistant import RecommendationRequest, RecommendationResponse
 from app.schemas.order import OrderResponse
@@ -59,4 +60,24 @@ def assistant_order_lookup(
 
 @router.post("/chat", response_model=AssistantQueryResponse)
 def chat(payload: AssistantQueryRequest, db: Session = Depends(get_db), user: User | None = Depends(get_optional_user)):
-    return shopping_agent.run(db, user, payload)
+    result = shopping_agent.run(db, user, payload)
+    if user:
+        db.scalar(select(User.id).where(User.id == user.id).with_for_update())
+        thread = db.scalar(select(ChatSession).where(ChatSession.user_id == user.id))
+        if thread is None:
+            thread = ChatSession(user_id=user.id)
+            db.add(thread)
+            db.flush()
+        body = result.model_dump(mode="json")
+        body["content"] = body.pop("reply")
+        db.add_all([ChatMessage(session_id=thread.id, role="user", body={"content": payload.message}),
+                    ChatMessage(session_id=thread.id, role="assistant", body=body)])
+        db.commit()
+    return result
+
+
+@router.get("/history")
+def history(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rows = db.scalars(select(ChatMessage).join(ChatSession).where(ChatSession.user_id == user.id)
+                      .order_by(ChatMessage.id.desc()).limit(100)).all()
+    return [{"role": row.role, **row.body} for row in reversed(rows)]

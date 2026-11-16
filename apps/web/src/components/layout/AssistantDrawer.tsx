@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { sendAssistantMessage } from "../../features/assistant/api";
+import { useAuth } from "../../context/AuthContext";
+import { getJson } from "../../services/http";
 import { ChatMessage } from "../../features/assistant/types";
 
 interface AssistantDrawerProps {
@@ -14,6 +16,8 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
   onClose,
   onCartUpdated,
 }) => {
+  const { isAuthenticated } = useAuth();
+  const [restoring, setRestoring] = useState(isAuthenticated);
   const location = useLocation();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,9 +37,18 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
   const productMatch = location.pathname.match(/^\/products\/(\d+)/);
   const activeProductId = productMatch ? Number(productMatch[1]) : undefined;
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let current = true;
+    getJson<ChatMessage[]>('/api/v1/assistant/history').then(rows => {
+      if (current && rows.length) setMessages(rows);
+    }).catch(() => {}).finally(() => { if (current) setRestoring(false); });
+    return () => { current = false; };
+  }, [isAuthenticated]);
+
   const handleSend = async (textOverride?: string) => {
     const query = (textOverride ?? input).trim();
-    if (!query || isLoading) return;
+    if (!query || restoring || isLoading) return;
 
     const userMsg: ChatMessage = { role: "user", content: query };
     setMessages((prev) => [...prev, userMsg]);
@@ -220,6 +233,9 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
               )}
 
               {/* Recommended Product Mini-Cards */}
+              {msg.action?.tool_name === "compare_products" && !!msg.recommended_products?.length && <div style={{overflowX:'auto'}}><table><thead><tr>{['SKU','Finish','Bundle','Protection','Price','Stock'].map(k => <th key={k}>{k}</th>)}</tr></thead><tbody>
+                {msg.recommended_products.map(p => <tr key={p.id}><td>{p.sku}</td><td>{p.specifications?.Finish}</td><td>{p.specifications?.Configuration}</td><td>{p.specifications?.Protection}</td><td>₹{p.price}</td><td>{p.stock_quantity}</td></tr>)}
+              </tbody></table></div>}
               {msg.recommended_products && msg.recommended_products.length > 0 && (
                 <div
                   style={{
@@ -326,7 +342,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
           />
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || restoring}
             style={{
               padding: "10px 16px",
               borderRadius: "8px",

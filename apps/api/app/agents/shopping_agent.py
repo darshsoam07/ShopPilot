@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 
 from app.models.product import Product
 from app.schemas.assistant import AgentToolAction, AssistantQueryResponse
-from app.services import cart_service, product_service
+from app.services import review_service, cart_service, product_service
 
 
 def response(tool, reply, products=(), *, status="executed", payload=None, prompts=()):
@@ -23,6 +23,19 @@ def run(db, user, request):
     if context and context.active_product_id:
         active = product_service.get_active_product(db, context.active_product_id)
 
+    if active and re.search(r"\b(reviews?|feedback|sentiment)\b", message):
+        digest = review_service.get_product_reviews_bundle(db, active.id).digest
+        return response("product_qa", digest.summary, [active])
+
+    siblings = []
+    if active and active.family:
+        siblings = db.scalars(select(Product).where(Product.is_active.is_(True), Product.family == active.family)
+                              .order_by(Product.price, Product.id)).all()
+    if siblings and "compare" in message and re.search(r"bundle|finish|standard|protection|configuration|variant", message):
+        rows = [{"sku": p.sku, "id": p.id, "price": str(p.price), "stock": p.stock_quantity,
+                 **{k: p.specifications.get(k) for k in ("Finish", "Configuration", "Protection")}} for p in siblings]
+        return response("compare_products", "Compare the available configurations below.", siblings, payload={"rows": rows})
+
     # Mutate only on an explicit imperative with an unambiguous target.
     add = re.fullmatch(r"(?:please )?add (.+?) to (?:my |the )?cart[.!]?", message)
     if add or message in {"add to cart", "buy this"}:
@@ -32,12 +45,34 @@ def run(db, user, request):
                 Product.is_active.is_(True), func.lower(Product.name) == add[1]
             ).limit(2)).all()
             target = matches[0] if len(matches) == 1 else None
+            if target is None and siblings:
+                phrase = add[1].replace("matte black", "obsidian").replace("-", " ")
+                phrase = re.sub(r"(\d+) year\b", r"\1 years", phrase)
+                options = siblings
+                criteria = {}
+                for key in ("Finish", "Configuration", "Protection"):
+                    for value in {p.specifications.get(key, "").lower() for p in siblings} - {""}:
+                        if re.search(r"\b" + re.escape(value) + r"\b", phrase):
+                            criteria[key] = value
+                remainder = phrase
+                for value in criteria.values():
+                    remainder = remainder.replace(value, " ")
+                remainder = re.sub(r"\b(the|a|with|and|finish|protection|plan|configuration|bundle|please)\b", "", remainder)
+                if criteria and not remainder.strip():
+                    options = [p for p in siblings if all(p.specifications.get(k, "").lower() == v for k,v in criteria.items())]
+                    if len(options) == 1:
+                        target = options[0]
+                    elif options:
+                        return response("add_to_cart", "Which configuration should I add?", options, status="skipped")
+                exact = [p for p in siblings if p.sku.lower() == add[1]]
+                if len(exact) == 1:
+                    target = exact[0]
         if target is None:
             return response("add_to_cart", "Open the product or give its full name.", status="skipped")
         if user is None:
             return response("add_to_cart", "Sign in to add this item.", [target], status="requires_auth")
         try:
-            cart = cart_service.add_item(db, user.id, target.id, 1)
+            cart = cart_service.add_item(db, user.id, target.id, 1, commit=False)
         except HTTPException as error:
             return response("add_to_cart", error.detail, [target], status="failed")
         return response("add_to_cart", f"Added one {target.name} to your cart.", [target],
