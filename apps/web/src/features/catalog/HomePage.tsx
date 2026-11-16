@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from './api';
+import { StorefrontCampaign } from './StorefrontCampaign';
 import { ProductCard } from './ProductCard';
 
 export function HomePage() {
@@ -17,22 +18,13 @@ export function HomePage() {
 
   return (
     <>
-      <section className="campaign" aria-labelledby="campaign-title">
-        <div className="campaign-copy">
-          <p className="campaign-kicker">Technology, chosen with intention</p>
-          <h1 id="campaign-title">Better tools.<br /><em>Better everyday.</em></h1>
-          <p className="campaign-intro">Thoughtfully selected technology for work, creativity and everyday living.</p>
-          <Link className="primary-button" to="/products">Explore the collection <span aria-hidden="true">→</span></Link>
-        </div>
-        <figure className="campaign-photo">
-          <img src="/demo/nova.jpg" alt="Over-ear headphones photographed against a golden studio backdrop" fetchPriority="high" />
-          <figcaption><span>Studio audio</span><Link to="/products?categories=Audio">Explore audio ↗</Link></figcaption>
-        </figure>
-      </section>
+      <StorefrontCampaign />
       <section className="catalog-section featured" id="featured">
         <div className="section-heading">
-          <div><p className="eyebrow">THE COLLECTION</p><h2>The technology edit</h2></div>
-          <span className="catalog-count">{productsQuery.data ? `${productsQuery.data.total} products` : 'Live catalogue'}</span>
+          <div><h2>The storefront selection</h2>
+            <span className="catalog-count">{productsQuery.data ? `${productsQuery.data.total} products` : 'Live catalogue'}</span>
+          </div>
+          <Link className="text-action" to="/products?sort=newest">New arrivals <span aria-hidden="true">↗</span></Link>
         </div>
         <details className="edit-filters"><summary>Search &amp; filter</summary><div className="catalog-filters">
           <label>Search <input type="search" maxLength={100} value={params.get('q') ?? ''} onChange={e => update('q', e.target.value)} /></label>

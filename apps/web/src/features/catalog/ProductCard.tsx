@@ -18,9 +18,9 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <article className="product-card">
-      <div className="product-image-wrap">
+      <Link className="product-image-wrap" to={`/products/${product.id}`} aria-label={`View ${product.name}`}>
         <ProductImage url={product.image_url} name={product.name} />
-      </div>
+      </Link>
       <div className="product-card-body">
         <p className="product-sku">{product.sku}</p>
         <h3><Link to={`/products/${product.id}`}>{product.name}</Link></h3>
@@ -31,7 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         {isAuthenticated ? (
           <>
-            <button type="button" className="secondary-button active-button" disabled={product.stock_quantity < 1 || addMutation.isPending} onClick={() => addMutation.mutate()}>
+            <button data-added={addMutation.isSuccess} type="button" className="secondary-button active-button" disabled={product.stock_quantity < 1 || addMutation.isPending} onClick={() => addMutation.mutate()}>
               {addMutation.isPending ? 'Adding…' : addMutation.isSuccess ? 'Added to cart ✓' : 'Add to cart'}
             </button>
             {addMutation.isError && <p className="inline-error" role="alert">{addMutation.error.message}</p>}

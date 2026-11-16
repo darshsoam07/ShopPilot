@@ -67,10 +67,10 @@ When adding a new screen, start with the existing tokens and component patterns.
 
 ## Phase 1 storefront
 
-The homepage pairs a linen text panel with the existing Nova studio photograph. The primary action opens the full collection. The photo caption opens the collection with the Audio filter selected.
+The homepage pairs a warm monochrome treatment of the local Nova studio photograph with an editorial headline. On small screens the photo precedes the copy. The primary action opens the Audio collection, and the secondary action opens the full catalogue. A category index links directly to the Audio, Workstation and Wearables filters. The New arrivals link uses the collection’s existing newest-first sort.
 
 The storefront uses an 8px spacing unit, 6px control corners, 1px hairlines and 44px control heights. The header switches to a keyboard-operable menu at 1100px. The campaign stacks at 700px. Theme-specific surfaces and actions respond to the existing palette selector.
 
 Catalogue cards use a 4:5 image stage. Product images retain their proportions. An unavailable image displays product initials with an accessible description. The purchase action, price, stock and SKU remain available when photography fails.
 
-See the [asset audit and before/after captures](phase-1/README.md).
+See the [original asset audit](phase-1/README.md) and the [reference-guide implementation review](phase-1/editorial-review/README.md).

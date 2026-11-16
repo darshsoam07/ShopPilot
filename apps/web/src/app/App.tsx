@@ -31,8 +31,9 @@ export default function App() {
   }, []);
   return (
     <div className="app-shell">
+      <a className="skip-content" href="#store-content">Skip to content</a>
       <Navbar open={() => setOpen(true)} />
-      <main>
+      <main id="store-content" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<CatalogPage />} />
@@ -53,9 +54,11 @@ export default function App() {
       <button className="copilot-trigger" onClick={() => setOpen(true)}>✦ Ask ShopPilot</button>
       <AssistantDrawer key={user?.id ?? 'guest'} isOpen={open} onClose={() => setOpen(false)} onCartUpdated={() => client.invalidateQueries({ queryKey: ['cart'] })} />
       <footer className="site-footer">
+        <Link className="footer-brand" to="/">ShopPilot</Link>
         <span>© {new Date().getFullYear()} ShopPilot</span>
         <nav aria-label="Footer">
           <Link to="/products">Collection</Link>
+          <Link to="/products?sort=newest">New arrivals</Link>
           <Link to="/assistant">Shopping assistant</Link>
         </nav>
       </footer>

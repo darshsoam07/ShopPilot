@@ -26,7 +26,7 @@ export function Navbar({ open }: { open: () => void }) {
   const cartQuery = useQuery({ queryKey: ['cart'], queryFn: getCart, enabled: isAuthenticated });
   return (
     <header className="site-header">
-      <Link to="/" className="brand"><span className="brand-mark">S</span> ShopPilot</Link>
+      <Link to="/" className="brand"><span className="brand-mark" aria-hidden="true">S</span> ShopPilot</Link>
       <button className="menu-toggle" type="button" aria-expanded={expanded} aria-controls="store-navigation" onClick={() => setExpanded(!expanded)}>{expanded ? "Close menu" : "Menu"}</button>
       <div id="store-navigation" className="store-navigation" data-expanded={expanded}>
         <nav className="main-nav" aria-label="Main navigation">
@@ -37,6 +37,9 @@ export function Navbar({ open }: { open: () => void }) {
           {user?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
         </nav>
         <div className="header-actions">
+          <form role="search" className="store-search" action="/products" method="get">
+            <input type="search" name="q" aria-label="Search the collection" placeholder="Search products" maxLength={100} />
+          </form>
           <button onClick={() => { setExpanded(false); open(); }} title="Ctrl or Cmd + K">Ask ShopPilot</button>
           <select aria-label="Storefront palette" value={theme} onChange={e => setTheme(e.target.value)}><option value="editorial">Editorial Alabaster</option><option value="swiss">Swiss Gallery</option><option value="matcha">Organic Matcha</option><option value="violet">Soft Cloud & Violet</option></select>
           {isAuthenticated ? <>
