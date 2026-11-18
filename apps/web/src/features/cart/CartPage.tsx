@@ -1,3 +1,5 @@
+import { ProductImage } from '../catalog/ProductImage';
+import { resolveProductMedia } from '../catalog/productMedia';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getCart, removeCartItem, updateCartItem } from './api';
@@ -25,7 +27,7 @@ export function CartPage() {
           <div className="cart-items">
             {cart.items.map((item) => (
               <article className="cart-item" key={item.id}>
-                <div className="cart-item-image">{item.product.image_url ? <img src={item.product.image_url} alt={item.product.name} /> : 'Product'}</div>
+                <div className="cart-item-image"><ProductImage url={resolveProductMedia(item.product).primary} name={item.product.name} /></div>
                 <div className="cart-item-main"><strong>{item.product.name}</strong><small>{item.product.sku}</small><span>₹{Number(item.product.price).toLocaleString('en-IN')} each</span></div>
                 <div className="cart-item-actions">
                   <label>Qty<select value={item.quantity} onChange={(event) => updateMutation.mutate({ itemId: item.id, quantity: Number(event.target.value) })}>{Array.from({ length: Math.min(item.product.stock_quantity, 10) }, (_, index) => index + 1).map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}</select></label>

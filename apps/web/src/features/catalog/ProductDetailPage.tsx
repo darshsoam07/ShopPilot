@@ -1,3 +1,5 @@
+import { ProductImage } from './ProductImage';
+import { resolveProductMedia, selectedProductImage } from './productMedia';
 import { ProductReviewsSection } from "./ProductReviewsSection";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -25,18 +27,17 @@ export function ProductDetailPage({ openAssistant }: { openAssistant: () => void
     onSuccess: cart => client.setQueryData(['cart'], cart) });
   if (!detail.data) return <section className="state-panel">{detail.error?.message ?? 'Loading product…'} <Link to="/">Browse catalogue</Link></section>;
   const p = detail.data;
-  const gallery = Array.from(new Set([p.image_url, ...p.gallery_images].filter((url): url is string => !!url)));
-  const image = gallery.includes(selected) ? selected : gallery[0];
-  const asset = (url: string) => url.startsWith('/media/') ? (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') + url : url;
+  const { gallery } = resolveProductMedia(p);
+  const image = selectedProductImage(gallery, selected);
   return <section className="catalog-section product-reference">
     <nav><Link to="/">Home</Link> / <Link to="/products">Collection</Link> / {p.name}</nav>
     <article className="detail-layout">
-      <div><div className="gallery-stage">{image ? <img src={asset(image)} alt={p.name} /> : <span>{p.name}</span>}
+      <div><div className="gallery-stage"><ProductImage url={image} name={p.name} priority />
         <div className="gallery-actions"><button aria-label="Save product" aria-pressed={saved.includes(p.id)} onClick={() => {
           const next = saved.includes(p.id) ? saved.filter(id => id !== p.id) : [...saved,p.id];
           setSaved(next); localStorage.setItem('saved-products', JSON.stringify(next));
         }}>{saved.includes(p.id) ? '♥' : '♡'}</button><button onClick={async () => { try { await navigator.clipboard.writeText(location.href); setShared('Link copied'); } catch { setShared('Copy the address from your browser'); } }}>Share</button></div></div>
-        <div className="gallery-thumbs">{gallery.map((url,i) => <button key={url} aria-pressed={url === image} onClick={() => setSelected(url)}><img alt={'View ' + (i+1)} src={asset(url)} /></button>)}</div><small role="status">{shared}</small></div>
+        <div className="gallery-thumbs">{gallery.map((url,i) => <button key={url} aria-pressed={url === image} onClick={() => setSelected(url)}><ProductImage url={url} name={p.name + ', view ' + (i + 1)} /></button>)}</div><small role="status">{shared}</small></div>
       <div><small>{p.brand ?? p.category} · {p.sku}</small><h1>{p.name}</h1><strong>₹{Number(p.price).toLocaleString('en-IN')}</strong>
       {p.rating && <p>★ {p.rating} ({p.review_count} reviews)</p>}<p>{p.description}</p><p>{p.stock_quantity} in stock</p>
       {variants.data && variants.data.length > 1 && <fieldset className="sku-options"><legend>Configuration, finish & protection</legend>

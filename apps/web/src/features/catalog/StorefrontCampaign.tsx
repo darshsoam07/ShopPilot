@@ -1,3 +1,4 @@
+import { resolveProductMedia } from './productMedia';
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from './api';
@@ -10,9 +11,9 @@ const collections = [
   { category: 'Wearables', label: 'Wearables' },
 ];
 
-export function StorefrontCampaign() {
-  const query = useQuery({ queryKey: ['campaign', 'AUD-NOVA-001'], queryFn: () => getProducts('q=AUD-NOVA-001') });
-  const product = query.data?.items.find(item => item.sku === 'AUD-NOVA-001');
+export function StorefrontCampaign({ featuredSku = 'AUD-NOVA-001' }: { featuredSku?: string }) {
+  const query = useQuery({ queryKey: ['campaign', featuredSku], queryFn: () => getProducts('q=' + encodeURIComponent(featuredSku)) });
+  const product = query.data?.items.find(item => item.sku === featuredSku);
   const index = useRef<HTMLElement>(null);
   useEffect(() => {
     const node = index.current;
@@ -34,7 +35,7 @@ export function StorefrontCampaign() {
           <Link to="/products?categories=Audio">Explore audio ↗</Link>
         </header>
         <div className="campaign-art">
-          {product ? <ProductImage url={product.image_url} name={product.name} priority /> : <span>Studio audio</span>}
+          {product ? <ProductImage url={resolveProductMedia(product).primary} name={product.name} priority /> : <span>Studio audio</span>}
         </div>
         {product && <div className="purchase-strip">
           <div><small>{product.sku} · {product.specifications.Configuration}</small><p>{product.description}</p></div>
