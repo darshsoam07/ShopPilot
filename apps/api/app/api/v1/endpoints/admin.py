@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Query, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_admin_user
@@ -6,7 +6,8 @@ from app.db.session import get_db
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.product import AdminProductCreate, AdminProductUpdate, ProductListResponse, ProductResponse
-from app.services import product_service
+from app.schemas.order import OrderListResponse, OrderResponse, OrderStatusUpdate
+from app.services import order_service, product_service
 from app.services.storage import storage_service
 
 router = APIRouter()
@@ -63,3 +64,15 @@ async def admin_upload_product_image(
         raise HTTPException(status_code=404, detail="Product not found")
     image_url = await storage_service.save_product_image(image)
     return product_service.update_product(db, product_id, AdminProductUpdate(image_url=image_url))
+
+
+@router.get("/orders", response_model=OrderListResponse)
+def list_orders(status: str | None = None, limit: int = Query(20, ge=1, le=100),
+                offset: int = Query(0, ge=0), admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    return order_service.list_admin_orders(db, status, limit, offset)
+
+
+@router.patch("/orders/{order_id}/status", response_model=OrderResponse)
+def update_order_status(order_id: int, payload: OrderStatusUpdate,
+                        admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    return order_service.update_status(db, order_id, payload.status)

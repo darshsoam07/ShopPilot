@@ -111,8 +111,7 @@ def test_coupon_checkout_rollback_and_fulfillment(client, db_session, customer_h
     order = result.json()
     assert order["status"] == "PROCESSING" and order["receipt_number"].startswith("SP-")
     assert Decimal(order["total_amount"]) == Decimal("2399") and order["coupon_code"] == "AI20"
-    for expected in ["SHIPPED", "DELIVERED", "DELIVERED"]:
-        assert client.post(f"{orders}/{order['id']}/advance-status", headers=customer_headers).json()["status"] == expected
+
 
 
 def test_decline_then_retry_with_shipping(client, db_session, customer_headers):

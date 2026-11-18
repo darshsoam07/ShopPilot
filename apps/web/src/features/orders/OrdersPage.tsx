@@ -1,13 +1,11 @@
 import { flushSync } from 'react-dom';
 import { useState } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { advanceOrderStatus, getOrders } from './api';
+import { getOrders } from './api';
 
 export function OrdersPage() {
-  const client = useQueryClient();
   const [printId, setPrintId] = useState<number>();
-  const advance = useMutation({ mutationFn: advanceOrderStatus, onSuccess: () => client.invalidateQueries({ queryKey: ['orders'] }) });
   const stages = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
   const ordersQuery = useQuery({ queryKey: ['orders'], queryFn: getOrders });
   const [searchParams] = useSearchParams();
@@ -33,9 +31,7 @@ export function OrdersPage() {
               <p>Subtotal ₹{order.subtotal_amount ?? order.total_amount} · Shipping ₹{order.shipping_cost} · Discount ₹{order.discount_amount} {order.coupon_code}</p>
               <div className="order-total"><span>Total</span><strong>₹{Number(order.total_amount).toLocaleString('en-IN')}</strong></div>
               <div className="receipt-actions">
-                {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && <button disabled={advance.isPending} onClick={() => advance.mutate(order.id)}>Simulate next stage</button>}
                 <button onClick={() => { flushSync(() => setPrintId(order.id)); window.print(); }}>Print receipt</button>
-                {advance.isError && advance.variables === order.id && <p role="alert">{advance.error.message}</p>}
               </div>
             </article>
           ))}

@@ -35,11 +35,6 @@ def check_coupon(payload: CouponValidateRequest, user: User = Depends(get_curren
     return order_service.validate_coupon(db, payload.code, payload.subtotal)
 
 
-@router.post("/{order_id}/advance-status", response_model=OrderResponse)
-def advance_status(order_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return order_service.advance_status(db, user.id, order_id)
-
-
 @router.get("", response_model=OrderListResponse)
 def list_my_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     orders = order_service.list_orders(db, current_user.id)
