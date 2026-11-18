@@ -1,6 +1,7 @@
 export interface Order {
   id: number;
   status: string;
+  payment?: {status:string; reference:string} | null;
   shipping_cost: string;
   subtotal_amount: string | null;
   discount_amount: string;
@@ -17,7 +18,10 @@ export interface OrderList { items: Order[]; total: number }
 export interface CheckoutPayload {
   carrier?: "DHL" | "FedEx" | "GLS";
   simulate_failure?: boolean;
-  shipping: { country?: string; phone?: string; billing_address?: string;
+  idempotency_key?: string;
+  address_id?: number;
+  billing_address?: string;
+  shipping?: { country?: string; phone?: string; billing_address?: string;
     full_name: string;
     address: string;
     city: string;

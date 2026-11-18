@@ -1,6 +1,10 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 const TOKEN_KEY = 'shoppilot_access_token';
 
+export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
 export async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
@@ -18,12 +22,13 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
   if (!response.ok) {
     let message = `API request failed (${response.status})`;
     try {
-      const body = await response.json() as { detail?: string };
-      if (body.detail) message = body.detail;
+      const body = await response.json() as { detail?: unknown };
+      if (typeof body.detail === 'string') message = body.detail;
+      else if (Array.isArray(body.detail)) message = (body.detail as {msg: string}[]).map(issue => issue.msg).join('. ');
     } catch {
       // Keep the HTTP status message when the server did not return JSON.
     }
-    throw new Error(message);
+    throw new ApiError(response.status, message);
   }
 
   if (response.status === 204) return undefined as T;

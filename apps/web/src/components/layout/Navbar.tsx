@@ -15,6 +15,7 @@ export function Navbar({ open }: { open: () => void }) {
   const { user, logout, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const clearPrivateQueries = () => {
+    queryClient.removeQueries({ queryKey: ['addresses'] });
     queryClient.removeQueries({ queryKey: ['cart'] });
     queryClient.removeQueries({ queryKey: ['orders'] });
   };
@@ -33,7 +34,7 @@ export function Navbar({ open }: { open: () => void }) {
           <NavLink to="/" end>Discover</NavLink>
           <NavLink to="/products">Collection</NavLink>
           <NavLink to="/assistant">AI Assistant</NavLink>
-          {isAuthenticated && <NavLink to="/orders">Orders</NavLink>}
+          {isAuthenticated && <><NavLink to="/orders">Orders</NavLink><NavLink to="/account/addresses">Addresses</NavLink></>}
           {user?.role === 'admin' && <><NavLink end to="/admin">Admin</NavLink><NavLink to="/admin/orders">Fulfillment</NavLink></>}
         </nav>
         <div className="header-actions">

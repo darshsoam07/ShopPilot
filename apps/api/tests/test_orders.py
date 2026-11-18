@@ -125,3 +125,55 @@ def test_decline_then_retry_with_shipping(client, db_session, customer_headers):
     payload["simulate_failure"] = False
     order = client.post("/api/v1/orders/checkout", headers=customer_headers, json=payload).json()
     assert Decimal(order["total_amount"]) == product.price + Decimal("9.99")
+
+
+def test_addresses_and_payment_lifecycle(client, db_session, customer_headers):
+    headers = customer_headers
+    address_url = "/api/v1/addresses"
+    create = lambda name: client.post(address_url, headers=headers, json={
+        "details": {**ADDRESS, "recipient_name": name}, "is_default": True}).json()
+    first, second = create("First Buyer"), create("Second Buyer")
+    addresses = client.get(address_url, headers=headers).json()
+    assert [a["is_default"] for a in addresses] == [True, False]
+    target = address_url + "/" + str(first["id"])
+    updated = client.patch(target, headers=headers, json={"details": {**ADDRESS, "city": "Mumbai"}, "is_default": True})
+    assert updated.json()["details"]["city"] == "Mumbai"
+    other = {"full_name":"Other Buyer", "email":"other@example.com", "password":"StrongPassword123!"}
+    client.post("/api/v1/auth/register", json=other)
+    token = client.post("/api/v1/auth/login", json=other).json()["access_token"]
+    outsider = {"Authorization": "Bearer " + token}
+    assert client.get(address_url, headers=outsider).json() == []
+    assert client.patch(target, headers=outsider, json={"is_default": True}).status_code == 404
+    assert client.delete(target, headers=outsider).status_code == 404
+    checkout = "/api/v1/orders/checkout"
+    body = {"address_id":first["id"], "payment_method":"card", "idempotency_key":"declined", "simulate_failure":True}
+    assert client.post(checkout, headers=outsider, json=body).status_code == 404
+    product = create_product(db_session, stock=4)
+    def fill_cart():
+        assert client.post("/api/v1/cart/items", headers=headers, json={"product_id":product.id, "quantity":1}).status_code == 200
+    fill_cart()
+    for _ in range(2):
+        assert client.post(checkout, headers=headers, json=body).status_code == 402
+    assert client.get("/api/v1/orders", headers=headers).json()["total"] == 0
+    assert client.get("/api/v1/cart", headers=headers).json()["item_count"] == 1
+    db_session.refresh(product)
+    assert product.stock_quantity == 4
+    attempts = client.get("/api/v1/payments", headers=headers).json()
+    assert len(attempts) == 1 and attempts[0]["status"] == "failed" and attempts[0]["order_id"] is None
+    for method in ("card", "upi", "cod"):
+        if method != "card":
+            fill_cart()
+        body.update(idempotency_key=method, simulate_failure=False, payment_method=method, billing_address="Billing Road")
+        result = client.post(checkout, headers=headers, json=body)
+        assert result.status_code == 201, result.text
+        order = result.json()
+        assert order["shipping_address"]["billing_address"] == "Billing Road"
+        assert order["payment"]["status"] == ("pending" if method == "cod" else "succeeded")
+        assert Decimal(order["payment"]["amount"]) == product.price
+        assert order["payment"]["order_id"] == order["id"]
+        assert client.post(checkout, headers=headers, json=body).json()["id"] == order["id"]
+    assert len(client.get("/api/v1/payments", headers=headers).json()) == 4
+    assert client.get("/api/v1/payments", headers=outsider).json() == []
+    assert client.get(f"/api/v1/payments/{order['payment']['id']}", headers=outsider).status_code == 404
+    assert client.delete(target, headers=headers).status_code == 204
+    assert client.get(f"/api/v1/orders/{order['id']}", headers=headers).json()["shipping_address"]["city"] == "Mumbai"

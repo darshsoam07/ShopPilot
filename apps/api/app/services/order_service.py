@@ -6,7 +6,8 @@ from sqlalchemy import func, delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.cart import Cart, CartItem
-from app.models.order import Coupon, Order, OrderItem
+from app.models.order import Coupon, Order, OrderItem, PaymentAttempt
+from app.services import address_service
 from app.schemas.order import CouponValidateResponse
 from app.models.product import Product
 
@@ -25,13 +26,24 @@ def validate_coupon(db: Session, code: str, subtotal: Decimal) -> CouponValidate
                                   discount_amount=discount, final_total=subtotal-discount, message=f"Saved ₹{discount}.")
 
 
-def checkout(db: Session, user_id: int, shipping_address: dict, payment_method="card", coupon_code=None, carrier=None) -> Order:
+def checkout(db: Session, user_id: int, shipping_address: dict, payment_method="card", coupon_code=None, carrier=None, *, address_id=None, key=None, decline=False) -> Order:
     """Create an order and deduct inventory atomically.
 
     The conditional UPDATE is the final oversell guard; it works even on databases
     where SELECT FOR UPDATE is ignored (for example SQLite tests).
     """
     try:
+        address_service.lock_customer(db, user_id)
+        key = key or uuid4().hex
+        prior = db.scalar(select(PaymentAttempt).where(PaymentAttempt.user_id == user_id, PaymentAttempt.idempotency_key == key))
+        if prior:
+            if prior.status == "failed":
+                raise HTTPException(402, prior.failure_reason)
+            return get_order(db, user_id, prior.order_id)
+        if address_id is not None:
+            shipping_address = {**address_service.get(db, user_id, address_id).details, **shipping_address}
+            if carrier:
+                shipping_address["carrier"] = carrier
         cart = db.scalar(
             select(Cart)
             .options(selectinload(Cart.items))
@@ -41,6 +53,8 @@ def checkout(db: Session, user_id: int, shipping_address: dict, payment_method="
         if cart is None or not cart.items:
             raise HTTPException(status_code=400, detail="Your cart is empty")
 
+        failed = decline and payment_method != "cod"
+        purchase = db.begin_nested() if failed else None
         order = Order(user_id=user_id, status="PROCESSING" if payment_method == "cod" else "PAID",
                       payment_method=payment_method, receipt_number=f"SP-{uuid4().hex.upper()}", total_amount=Decimal("0.00"), currency="INR", shipping_address=shipping_address)
         db.add(order)
@@ -94,7 +108,19 @@ def checkout(db: Session, user_id: int, shipping_address: dict, payment_method="
         fees = {"DHL": Decimal("15.99"), "FedEx": Decimal("9.99"), "GLS": Decimal("7.99")}
         order.shipping_cost = fees[carrier] if carrier else Decimal("0.00")
         order.total_amount += order.shipping_cost
+        attempt = PaymentAttempt(user_id=user_id, payment_method=payment_method, currency=order.currency,
+                                 amount=order.total_amount, idempotency_key=key, reference=f"PAY-{uuid4().hex}",
+                                 status="failed" if failed else ("pending" if payment_method == "cod" else "succeeded"))
+        if purchase is not None:
+            purchase.rollback()
+            attempt.failure_reason = "Demo payment declined. Your cart is ready to retry."
+            db.add(attempt)
+            db.commit()
+            raise HTTPException(402, attempt.failure_reason)
+        attempt.order_id = order.id
+        db.add(attempt)
         db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
+        db.flush()
         db.commit()
         db.refresh(order)
         return order
