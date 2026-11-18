@@ -1,3 +1,7 @@
+import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getProducts } from './api';
+import { ProductImage } from './ProductImage';
 import { Link } from 'react-router-dom';
 
 const collections = [
@@ -7,23 +11,38 @@ const collections = [
 ];
 
 export function StorefrontCampaign() {
+  const query = useQuery({ queryKey: ['campaign', 'AUD-NOVA-001'], queryFn: () => getProducts('q=AUD-NOVA-001') });
+  const product = query.data?.items.find(item => item.sku === 'AUD-NOVA-001');
+  const index = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const node = index.current;
+    if (!node || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        node.classList.add('in-view');
+        observer.disconnect();
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <section className="campaign" aria-labelledby="campaign-title">
+        <header className="model-heading"><h1 id="campaign-title">{product?.name ?? 'Studio audio'}</h1>
+          <Link to="/products?categories=Audio">Explore audio ↗</Link>
+        </header>
         <div className="campaign-art">
-          <img src="/demo/nova.jpg" alt="Black over-ear Nova headphones in a studio still life" width="1200" height="800" fetchPriority="high" />
+          {product ? <ProductImage url={product.image_url} name={product.name} priority /> : <span>Studio audio</span>}
         </div>
-        <div className="campaign-copy">
-          <p className="campaign-kicker">The audio edit</p>
-          <h1 id="campaign-title">For the love<br />of <em>listening.</em></h1>
-          <p className="campaign-intro">Explore the Nova headphone collection, from the standard pair to the pro bundle.</p>
-          <div className="campaign-actions">
-            <Link className="primary-button" to="/products?categories=Audio">Explore audio <span aria-hidden="true">→</span></Link>
-            <Link className="text-action" to="/products">Browse all products</Link>
-          </div>
-        </div>
+        {product && <div className="purchase-strip">
+          <div><small>{product.sku} · {product.specifications.Configuration}</small><p>{product.description}</p></div>
+          <strong>₹{Number(product.price).toLocaleString('en-IN')}</strong>
+          <Link className="primary-button" to={`/products/${product.id}`}>View configuration →</Link>
+        </div>}
       </section>
-      <nav className="collection-index" aria-label="Shop by category">
+      <nav ref={index} className="collection-index" aria-label="Shop by category">
         <span>Shop by category</span>
         {collections.map(({ category, label }) => (
           <Link key={category} to={'/products?categories=' + encodeURIComponent(category)}>

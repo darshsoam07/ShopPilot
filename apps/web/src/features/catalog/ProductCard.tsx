@@ -19,7 +19,7 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="product-card">
       <Link className="product-image-wrap" to={`/products/${product.id}`} aria-label={`View ${product.name}`}>
-        <ProductImage url={product.image_url} name={product.name} />
+        <ProductImage url={product.image_url === '/demo/nova.jpg' && product.specifications.Finish === 'Alabaster' ? null : product.image_url} name={product.name} />
       </Link>
       <div className="product-card-body">
         <p className="product-sku">{product.sku}</p>
