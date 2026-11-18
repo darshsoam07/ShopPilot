@@ -19,12 +19,13 @@ export function OrdersPage() {
       <div className="page-heading"><p className="eyebrow">YOUR PURCHASES</p><h1>Order history</h1><p>Orders placed using your ShopPilot account.</p></div>
       {placedId && <div className="success-note">Order #{placedId} has been placed successfully. This is a demo order; no payment was collected.</div>}
       {ordersQuery.data.items.length === 0 ? <div className="state-panel">You have not placed any orders yet. <Link to="/">Browse products</Link>.</div> : (
-        <div className="orders-list">
+        <div className="orders-list customer-order-history">
           {ordersQuery.data.items.map((order) => (
             <article data-print={printId === order.id} className="order-card" key={order.id}>
               <div className="order-card-heading"><div><small>ORDER #{order.id}</small><strong>{new Date(order.created_at).toLocaleString()}</strong></div><span className="order-status">{order.status}</span></div>
               <div className="order-card-items">{order.items.map((item) => <div key={item.id}><span>{item.product_name} ({item.sku}) × {item.quantity}</span><strong>₹{Number(item.line_total).toLocaleString('en-IN')}</strong></div>)}</div>
               <p>Receipt {order.receipt_number ?? '#' + order.id} · {order.payment_method.toUpperCase()}</p>
+              {order.payment && <p>Payment {order.payment.status} � {order.payment.reference}</p>}
               <address>{Object.values(order.shipping_address).filter(Boolean).join(', ')}</address>
               <ol className="order-stages">{stages.map((stage, index) => <li key={stage} aria-current={stage === order.status ? 'step' : undefined}
                 data-done={index <= stages.indexOf(order.status)}>{stage === 'PAID' && order.payment_method === 'cod' ? 'Pay on delivery' : stage}</li>)}</ol>

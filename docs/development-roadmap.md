@@ -35,8 +35,8 @@
 - [x] Checkout transaction and conditional inventory deduction
 - [x] Order and order-item price/name/SKU snapshots
 - [x] Customer order history and ownership enforcement
-- [ ] Address book and saved delivery addresses
-- [ ] Simulated payment records and order confirmation lifecycle
+- [x] Address book and saved delivery addresses
+- [x] Simulated payment records and order confirmation lifecycle
 - [ ] Cancellation and return eligibility workflows
 - [ ] More concurrency and failure-path tests against PostgreSQL
 
