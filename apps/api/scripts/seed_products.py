@@ -5,6 +5,12 @@ from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models.product import Product
 
+LEGACY_NOVA_PHOTO = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900"
+INHERITED_NOVA_PHOTOS = {
+    LEGACY_NOVA_PHOTO, "/demo/nova.jpg",
+    *(f"/demo/nova-detail-{i}.jpg" for i in range(1, 5)),
+}
+
 SAMPLE_PRODUCTS = [
     {
         "name": "AeroBook Pro 14",
@@ -25,7 +31,7 @@ SAMPLE_PRODUCTS = [
         "sku": "AUD-NOVA-001",
         "price": Decimal("4999.00"),
         "stock_quantity": 35,
-        "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900",
+        "image_url": LEGACY_NOVA_PHOTO,
     },
     {
         "name": "Pulse Smartwatch 2",
@@ -53,6 +59,8 @@ for suffix, finish, bundle, plan, extra in [
     option = {**base, "name": f"Nova Wireless Headphones · {finish}, {bundle}" + (f", {plan} care" if extra and plan != "None" else ""),
               "sku": f"AUD-NOVA-{suffix}", "slug": f"nova-wireless-{suffix.lower()}", "price": base["price"] + extra,
               "specifications": {**base["specifications"], "Finish": finish, "Configuration": bundle, "Protection": plan}}
+    if finish != base["specifications"]["Finish"]:
+        option.update(image_url=None, gallery_images=[])
     SAMPLE_PRODUCTS.append(option)
 
 
@@ -61,7 +69,15 @@ def main() -> None:
         inserted = 0
         for item in SAMPLE_PRODUCTS:
             exists = db.scalar(select(Product).where(Product.sku == item["sku"]))
-            if exists and item.get("family") and not exists.gallery_images and exists.image_url in {item["image_url"], "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900"}:
+            if exists and exists.sku == "AUD-NOVA-ALB":
+                if exists.family in (None, "", "nova") and exists.specifications.get("Finish") in (None, "", "Alabaster"):
+                    if exists.image_url in INHERITED_NOVA_PHOTOS:
+                        exists.image_url = None
+                    gallery = [url for url in exists.gallery_images if url not in INHERITED_NOVA_PHOTOS]
+                    if gallery != exists.gallery_images:
+                        exists.gallery_images = gallery
+                continue
+            if exists and item.get("family") and not exists.gallery_images and exists.image_url in {item["image_url"], LEGACY_NOVA_PHOTO}:
                 exists.image_url = item["image_url"]
                 exists.gallery_images = item["gallery_images"]
             if exists and item.get("family") and not exists.family:
