@@ -14,7 +14,7 @@ The repository now contains a working application foundation and an initial tran
 - `/health` liveness endpoint, database-aware `/readyz`, request IDs, and JSON request logs.
 - Pytest integration tests for authentication, RBAC, assistant recommendations, cart/checkout, inventory conflicts, order ownership, readiness, admin product actions, and image storage.
 
-Still planned: category management, saved customer addresses, payment gateway integration, admin order-status workflows, real LLM orchestration/conversation persistence, richer recommendation personalization, frontend automated tests, and production security hardening. AI recommendations currently use a deterministic catalogue-query service, not a generative model. Checkout creates a demo order and does not collect payment.
+Still planned: category management, saved customer addresses, payment gateway integration, real LLM orchestration/conversation persistence, richer recommendation personalization, frontend automated tests, and production security hardening. AI recommendations currently use a deterministic catalogue-query service, not a generative model. Checkout creates a demo order and does not collect payment.
 
 ## Product documentation
 
@@ -113,6 +113,8 @@ Useful endpoints:
 | GET | `/api/v1/orders/{order_id}` | Get one owned order |
 | POST | `/api/v1/assistant/recommendations` | Catalogue-grounded, rule-based product recommendations |
 | GET | `/api/v1/assistant/orders/{order_id}` | Authenticated customer order lookup for assistant tooling |
+| GET | `/api/v1/admin/orders` | Admin order history across customers. Filter by status and paginate with limit (1–100) and offset. |
+| PATCH | `/api/v1/admin/orders/{order_id}/status` | Admin fulfillment. Send the next status in the status field. Invalid transitions return 409. |
 | GET/POST | `/api/v1/admin/products` | List/create products (admin only) |
 | PATCH/DELETE | `/api/v1/admin/products/{product_id}` | Update/deactivate products (admin only) |
 | POST | `/api/v1/admin/products/{product_id}/image` | Upload an image to local development storage |
@@ -173,7 +175,7 @@ From the repository root, use `make dev-api`, `make dev-web`, `make test`, `make
 ## Next implementation milestones
 
 1. Expand catalogue with categories, filtering/sorting, and detail pages.
-2. Add admin order management, address book, and simulated payment records.
+2. Add address book, and simulated payment records.
 3. Persist AI conversation history, implement comparison tools, and add audit records and provider integration.
 4. Add frontend component/end-to-end tests and security hardening.
 5. Evolve the product into the Cloud / DevOps / SRE workload: containers, CI/CD, cloud hosting, IaC, observability, SLOs, load testing, and incident runbooks.

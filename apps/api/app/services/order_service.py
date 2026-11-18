@@ -2,7 +2,7 @@ from uuid import uuid4
 from decimal import Decimal
 
 from fastapi import HTTPException
-from sqlalchemy import delete, select, update
+from sqlalchemy import func, delete, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.cart import Cart, CartItem
@@ -125,12 +125,29 @@ def get_order(db: Session, user_id: int, order_id: int) -> Order:
     return order
 
 
-def advance_status(db: Session, user_id: int, order_id: int) -> Order:
-    order = db.scalar(select(Order).where(Order.id == order_id, Order.user_id == user_id).with_for_update())
+NEXT_STATUS = {"placed": "PROCESSING", "PAID": "PROCESSING", "PROCESSING": "SHIPPED", "SHIPPED": "DELIVERED"}
+
+
+def list_admin_orders(db: Session, status: str | None, limit: int, offset: int):
+    filters = [Order.status == status] if status is not None else []
+    total = db.scalar(select(func.count()).select_from(Order).where(*filters))
+    query = (select(Order).where(*filters).options(selectinload(Order.items))
+             .order_by(Order.created_at.desc(), Order.id.desc()).limit(limit).offset(offset))
+    return {"items": db.scalars(query).all(), "total": total}
+
+
+def update_status(db: Session, order_id: int, requested: str) -> Order:
+    order = db.scalar(select(Order).where(Order.id == order_id).with_for_update()
+                      .execution_options(populate_existing=True))
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    stages = {"placed": "PROCESSING", "PAID": "PROCESSING", "PROCESSING": "SHIPPED", "SHIPPED": "DELIVERED"}
-    if order.status in stages:
-        order.status = stages[order.status]
+    previous = order.status
+    if NEXT_STATUS.get(previous) != requested:
+        raise HTTPException(status_code=409, detail=f"Cannot change {previous} to {requested}")
+    result = db.execute(update(Order).where(Order.id == order_id, Order.status == previous)
+                        .values(status=requested))
+    if result.rowcount != 1:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Order status changed. Refresh and try again.")
     db.commit()
     return order

@@ -88,3 +88,7 @@ class OrderResponse(BaseModel):
 class OrderListResponse(BaseModel):
     items: list[OrderResponse]
     total: int
+
+
+class OrderStatusUpdate(BaseModel):
+    status: Literal["PROCESSING", "SHIPPED", "DELIVERED"]

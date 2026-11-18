@@ -3,10 +3,12 @@ import base64
 import struct
 import os
 from pathlib import Path
+import time
 import socket
 import subprocess
 from urllib.parse import parse_qs, urlsplit
 
+from admin_orders_browser import exercise_admin_orders
 from playwright.sync_api import expect, sync_playwright
 
 WEB = Path(__file__).resolve().parents[1]
@@ -258,10 +260,20 @@ if __name__ == "__main__":
                                "--port", str(port), "--strictPort"], cwd=WEB,
                               env={**os.environ, "VITE_API_URL": API}, stdout=subprocess.DEVNULL)
     try:
+        deadline = time.monotonic() + 30
+        while True:
+            try:
+                with socket.create_connection(("127.0.0.1", port), timeout=1):
+                    break
+            except OSError:
+                if server.poll() is not None or time.monotonic() >= deadline:
+                    raise RuntimeError("Vite did not start")
+                time.sleep(0.1)
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(channel="msedge")
             for width, height in VIEWPORTS:
                 exercise(browser, origin, width, height)
+                exercise_admin_orders(browser, origin, API, width, height)
             browser.close()
     finally:
         server.terminate()

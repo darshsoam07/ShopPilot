@@ -9,6 +9,7 @@ import { AssistantPage } from '../features/assistant/AssistantPage';
 import { AuthPage } from '../features/auth/AuthPage';
 import { CartPage } from '../features/cart/CartPage';
 import { OrdersPage } from '../features/orders/OrdersPage';
+import { AdminOrdersPage } from '../features/admin/AdminOrdersPage';
 import { AdminPage } from '../features/admin/AdminPage';
 import { ProtectedRoute } from '../components/common/ProtectedRoute';
 import { useAuth } from '../context/AuthContext';
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/orders" element={<OrdersPage />} />
           </Route>
           <Route element={<ProtectedRoute requiredRole="admin" />} >
+            <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
         </Routes>

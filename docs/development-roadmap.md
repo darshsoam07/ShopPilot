@@ -45,7 +45,7 @@
 - [x] Admin product creation and inventory screen
 - [x] Local product image upload
 - [ ] Category management UI
-- [ ] Order-status management and fulfilment view
+- [x] Order-status management and fulfilment view
 - [ ] Sales and inventory analytics
 
 ## Milestone 5 — AI features (initial recommendation endpoint complete)

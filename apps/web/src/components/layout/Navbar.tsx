@@ -34,7 +34,7 @@ export function Navbar({ open }: { open: () => void }) {
           <NavLink to="/products">Collection</NavLink>
           <NavLink to="/assistant">AI Assistant</NavLink>
           {isAuthenticated && <NavLink to="/orders">Orders</NavLink>}
-          {user?.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
+          {user?.role === 'admin' && <><NavLink end to="/admin">Admin</NavLink><NavLink to="/admin/orders">Fulfillment</NavLink></>}
         </nav>
         <div className="header-actions">
           <form role="search" className="store-search" action="/products" method="get">
