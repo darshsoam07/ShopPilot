@@ -167,11 +167,15 @@ def update_status(db: Session, order_id: int, requested: str) -> Order:
                       .execution_options(populate_existing=True))
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
+    from app.models.after_sales import ServiceRequest
+    if db.scalar(select(ServiceRequest.id).where(ServiceRequest.order_id == order_id,
+                 ServiceRequest.kind == "cancellation", ServiceRequest.status == "REQUESTED")):
+        raise HTTPException(409, "A cancellation request is pending")
     previous = order.status
     if NEXT_STATUS.get(previous) != requested:
         raise HTTPException(status_code=409, detail=f"Cannot change {previous} to {requested}")
     result = db.execute(update(Order).where(Order.id == order_id, Order.status == previous)
-                        .values(status=requested))
+                        .values(status=requested, **({"delivered_at": func.now()} if requested == "DELIVERED" else {})))
     if result.rowcount != 1:
         db.rollback()
         raise HTTPException(status_code=409, detail="Order status changed. Refresh and try again.")

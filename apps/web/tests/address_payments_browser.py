@@ -34,6 +34,7 @@ def wait_for(url):
 
 def run(browser, web, api, width, height):
     page = browser.new_page(viewport={"width": width, "height": height})
+    page.route("https://**/*", lambda route: route.abort())
     credentials = {"full_name":"Demo Buyer", "email":f"qa{width}@example.com", "password":secrets.token_urlsafe(20)}
     assert page.request.post(api+"/auth/register", data=credentials).ok
     token = page.request.post(api+"/auth/login", data=credentials).json()["access_token"]
@@ -93,6 +94,9 @@ def run(browser, web, api, width, height):
     page.once("dialog", lambda d:d.accept())
     page.get_by_role("button",name="Delete").last.click()
     expect(page.locator("article")).to_have_count(1)
+    from after_sales_browser import exercise_after_sales
+    from app.db.session import engine
+    exercise_after_sales(page, web, api, headers, engine)
     page.close()
     print(f"PASS address book and payments {width} x {height}",flush=True)
 

@@ -1,3 +1,4 @@
+from app.models.after_sales import ServiceRequest, Refund
 from app.models.chat import ChatMessage, ChatSession
 from app.models.review import ProductReview
 from app.models.cart import Cart, CartItem

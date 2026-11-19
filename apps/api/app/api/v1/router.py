@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import account, admin, assistant, auth, cart, orders, products, reviews
+from app.api.v1.endpoints import after_sales, account, admin, assistant, auth, cart, orders, products, reviews
 
 api_router = APIRouter()
+api_router.include_router(after_sales.router, tags=['after-sales'])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(products.router, prefix="/products", tags=["products"])
 api_router.include_router(cart.router, prefix="/cart", tags=["cart"])
