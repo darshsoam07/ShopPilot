@@ -1,4 +1,5 @@
 export interface Order {
+  eligible_request?: 'cancellation' | 'return' | null;
   id: number;
   status: string;
   payment?: {status:string; reference:string} | null;

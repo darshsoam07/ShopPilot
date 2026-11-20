@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getOrders } from './api';
 
+import { OrderAfterSales } from './AfterSales';
+
 export function OrdersPage() {
   const [printId, setPrintId] = useState<number>();
   const stages = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
@@ -31,6 +33,7 @@ export function OrdersPage() {
                 data-done={index <= stages.indexOf(order.status)}>{stage === 'PAID' && order.payment_method === 'cod' ? 'Pay on delivery' : stage}</li>)}</ol>
               <p>Subtotal ₹{order.subtotal_amount ?? order.total_amount} · Shipping ₹{order.shipping_cost} · Discount ₹{order.discount_amount} {order.coupon_code}</p>
               <div className="order-total"><span>Total</span><strong>₹{Number(order.total_amount).toLocaleString('en-IN')}</strong></div>
+              <OrderAfterSales order={order} />
               <div className="receipt-actions">
                 <button onClick={() => { flushSync(() => setPrintId(order.id)); window.print(); }}>Print receipt</button>
               </div>

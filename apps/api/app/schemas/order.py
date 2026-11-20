@@ -104,6 +104,7 @@ class PaymentResponse(BaseModel):
 
 
 class OrderResponse(BaseModel):
+    eligible_request: str | None = None
     payment: PaymentResponse | None = None
     id: int
     status: str

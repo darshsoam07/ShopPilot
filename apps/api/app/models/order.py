@@ -39,6 +39,13 @@ class Order(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @property
+    def eligible_request(self):
+        from app.services.after_sales import eligible_kind
+        return eligible_kind(self)
+
     payment: Mapped["PaymentAttempt | None"] = relationship(lazy="selectin")
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan", lazy="selectin")
 

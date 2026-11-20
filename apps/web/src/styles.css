@@ -425,3 +425,17 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 }
 
 .customer-order-history .order-card { min-width: 0; overflow-wrap: anywhere; }
+
+.order-after-sales form,
+.order-after-sales label {
+  display: grid;
+  gap: .5rem;
+}
+.order-after-sales form { margin-block: 1rem; }
+.order-after-sales textarea { width: 100%; min-height: 4rem; font: inherit; }
+.order-after-sales button { justify-self: start; }
+.after-sales-queue article { margin-block: 1rem; overflow-wrap: anywhere; }
+.after-sales-queue article button { margin-inline-end: .5rem; }
+@media print {
+  .order-after-sales { display: none; }
+}

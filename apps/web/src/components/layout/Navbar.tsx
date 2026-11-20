@@ -32,7 +32,7 @@ export function Navbar({ open }: { open: () => void }) {
           <NavLink to="/products">Collection</NavLink>
           <NavLink to="/assistant">AI Assistant</NavLink>
           {isAuthenticated && <><NavLink to="/orders">Orders</NavLink><NavLink to="/account/addresses">Addresses</NavLink></>}
-          {user?.role === 'admin' && <><NavLink end to="/admin">Admin</NavLink><NavLink to="/admin/orders">Fulfillment</NavLink></>}
+          {user?.role === 'admin' && <><NavLink end to="/admin">Admin</NavLink><NavLink to="/admin/orders">Fulfillment</NavLink><NavLink to="/admin/after-sales">After-sales</NavLink></>}
         </nav>
         <div className="header-actions">
           <form role="search" className="store-search" action="/products" method="get">

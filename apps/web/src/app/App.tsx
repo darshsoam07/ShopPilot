@@ -11,6 +11,7 @@ import { AssistantPage } from '../features/assistant/AssistantPage';
 import { AuthPage } from '../features/auth/AuthPage';
 import { CartPage } from '../features/cart/CartPage';
 import { OrdersPage } from '../features/orders/OrdersPage';
+import { AdminAfterSales } from '../features/orders/AfterSales';
 import { AdminOrdersPage } from '../features/admin/AdminOrdersPage';
 import { AddressesPage } from '../features/orders/AddressesPage';
 import { AdminPage } from '../features/admin/AdminPage';
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/orders" element={<OrdersPage />} />
           </Route>
           <Route element={<ProtectedRoute requiredRole="admin" />} >
+            <Route path="/admin/after-sales" element={<AdminAfterSales />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
