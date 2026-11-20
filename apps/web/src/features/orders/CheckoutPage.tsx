@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import { CheckoutStepper } from './CheckoutStepper';
-import { useState } from 'react';
-=======
 import { useRef, useState } from 'react';
->>>>>>> origin/codex/canonical-storefront
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { addressUrl, useAddresses, type Address } from './AddressesPage';
@@ -66,7 +62,7 @@ export function CheckoutPage() {
     <div className="checkout-columns"><div className="checkout-panel">
     {step === 1 && <form onSubmit={e => { e.preventDefault(); if(!selected && saveAddress) save.mutate(); else setStep(2); }}><h2>Delivery details</h2>
       <label>Delivery address<select value={selectedId} onChange={e=>setChoice(e.target.value)}><option value="">Enter a new address</option>
-        {addresses.data?.map(a=><option key={a.id} value={a.id}>{a.details.recipient_name} · {a.details.address_line1}{a.is_default ? ' (default)' : ''}</option>)}</select></label>
+        {addresses.data?.map(a=><option key={a.id} value={a.id}>{a.details.recipient_name} Â· {a.details.address_line1}{a.is_default ? ' (default)' : ''}</option>)}</select></label>
       {selected ? <address>{Object.values(selected.details).filter(Boolean).join(', ')}</address> : <>
       {(['full_name','address','city','postal_code'] as const).map((key,i) => <label key={key}>{['Recipient name','Street address','City','Postal code'][i]}
         <input required minLength={[2,5,2,3][i]} maxLength={[120,255,100,32][i]} value={shipping[key]} onChange={e => setShipping({ ...shipping, [key]: e.target.value })} /></label>)}

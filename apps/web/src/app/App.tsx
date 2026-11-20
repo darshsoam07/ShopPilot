@@ -3,14 +3,8 @@ import { useCartDrawer } from '../features/cart/CartDrawerContext';
 import { SmoothScroll } from '../components/motion/SmoothScroll';
 import { CatalogPage } from '../features/catalog/CatalogPage';
 import { ProductDetailPage } from '../features/catalog/ProductDetailPage';
-<<<<<<< HEAD
 import { CommandPalette } from '../components/layout/CommandPalette';
 import { Link, Route, Routes } from 'react-router-dom';
-=======
-import { AssistantDrawer } from '../components/layout/AssistantDrawer';
-import { Link, Route, Routes, useMatch } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
->>>>>>> origin/codex/canonical-storefront
 import { useEffect, useState } from 'react';
 import { HomePage } from '../features/catalog/HomePage';
 import { AssistantPage } from '../features/assistant/AssistantPage';
@@ -26,11 +20,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { CheckoutPage } from '../features/orders/CheckoutPage';
 
 export default function App() {
-<<<<<<< HEAD
   const { isOpen, closeDrawer } = useCartDrawer();
-=======
-  const productRoute = useMatch("/products/:productId");
->>>>>>> origin/codex/canonical-storefront
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
 
@@ -70,11 +60,6 @@ export default function App() {
           </Route>
         </Routes>
       </main>
-<<<<<<< HEAD
-=======
-      {!productRoute && <button className="copilot-trigger" onClick={() => setOpen(true)}>✦ Ask ShopPilot</button>}
-      <AssistantDrawer key={user?.id ?? 'guest'} isOpen={open} onClose={() => setOpen(false)} onCartUpdated={() => client.invalidateQueries({ queryKey: ['cart'] })} />
->>>>>>> origin/codex/canonical-storefront
       <footer className="site-footer">
         <Link className="footer-brand" to="/">ShopPilot</Link>
         <span>© {new Date().getFullYear()} ShopPilot</span>
