@@ -1,9 +1,9 @@
 /* Editorial storefront foundation */
 :root {
-  --color-canvas: #F3F4F2; --color-surface: #FFFFFF; --color-surface-soft: #E9ECEA;
-  --color-ink: #111315; --color-muted: #626A70; --color-accent: #315BFF; --color-border: #D7DCDE;
-  --font-display: 'Space Grotesk', system-ui, sans-serif; --font-heading: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: Inter, system-ui, sans-serif; --gutter: max(clamp(18px, 5vw, 80px), calc((100vw - 1440px) / 2));
+  --color-canvas: var(--bg-canvas); --color-surface: var(--bg-elevated); --color-surface-soft: var(--bg-surface);
+  --color-ink: var(--ink-primary); --color-muted: var(--ink-secondary); --color-accent: var(--accent-text); --color-border: var(--border-strong);
+  --font-heading: var(--font-display);
+  --font-body: var(--font-sans);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -200,7 +200,7 @@ h1, h2, h3, p { margin-top: 0; }
 
 .site-header { padding: 0 var(--gutter); min-height: 72px; gap: 2vw; border-bottom: var(--line); }
 .store-navigation { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 14px; }
-.brand { color: var(--color-ink); font-family: var(--font-heading); }.brand-mark { border-radius: var(--radius); background: var(--color-accent); color: white; }
+.brand { color: var(--color-ink); font-family: var(--font-heading); }.brand-mark { border-radius: var(--radius); background: var(--accent-fill); color: var(--ink-primary); }
 .main-nav { gap: clamp(12px, 2vw, 32px); }.main-nav a { padding-block: 12px; color: var(--color-muted); }
 .main-nav a.active { color: var(--color-ink); text-decoration: underline; text-underline-offset: 7px; }
 .menu-toggle { display: none; }
@@ -279,7 +279,9 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .purchase-strip { padding-block: var(--space-5); border-bottom: var(--line); }
 .purchase-strip div { flex: 1 1 240px; }
 .purchase-strip p { margin: .4rem 0 0; font-size: .9375rem; }
-.purchase-strip small, .product-sku, .catalog-count, .checkout-summary small { font-family: 'IBM Plex Mono', monospace; }
+.product-card-bottom strong, .purchase-strip strong, .purchase-strip small, .product-sku, .catalog-count, .checkout-summary small { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.stock-good { color: var(--accent-text); }
+.stock-out { color: var(--status-danger); }
 .purchase-strip strong { font-variant-numeric: tabular-nums; }
 .collection-index.in-view, .store-navigation[data-expanded="true"] { animation: atelier-enter 220ms ease-out; }
 @keyframes atelier-enter { from { opacity: .8; transform: translateY(5px); } to { opacity: 1; transform: none; } }

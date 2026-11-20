@@ -203,7 +203,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
         </header>
 
         {/* Message Stream */}
-        <div
+        <div data-lenis-prevent
           style={{
             flex: 1,
             overflowY: "auto",
