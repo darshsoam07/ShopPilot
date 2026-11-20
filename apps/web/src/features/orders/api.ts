@@ -7,6 +7,3 @@ export function validateCouponCode(code: string, subtotal: string) {
 export function submitCheckoutOrder(payload: CheckoutPayload) {
   return postJson<Order>('/api/v1/orders/checkout', payload);
 }
-export function advanceOrderStatus(id: number) {
-  return postJson<Order>(`/api/v1/orders/${id}/advance-status`, {});
-}

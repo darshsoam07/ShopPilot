@@ -16,28 +16,25 @@ def checkout(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if payload.simulate_failure:
-        raise HTTPException(status_code=402, detail="Demo payment declined. Your cart is ready to retry.")
+    address = {}
     if payload.shipping_address:
         address = payload.shipping_address.model_dump()
-    else:
+    elif payload.shipping:
         shipping = payload.shipping
         address = {"recipient_name": shipping.full_name, "address_line1": shipping.address,
                    "city": shipping.city, "postal_code": shipping.postal_code}
         address.update(shipping.model_dump(include={"country", "phone", "billing_address"}, exclude_none=True))
+    if payload.billing_address:
+        address["billing_address"] = payload.billing_address
     if payload.carrier:
         address["carrier"] = payload.carrier
-    return order_service.checkout(db, current_user.id, address, payload.payment_method, payload.coupon_code, carrier=payload.carrier)
+    return order_service.checkout(db, current_user.id, address, payload.payment_method, payload.coupon_code, carrier=payload.carrier,
+                                  address_id=payload.address_id, key=payload.idempotency_key, decline=payload.simulate_failure)
 
 
 @router.post("/validate-coupon", response_model=CouponValidateResponse)
 def check_coupon(payload: CouponValidateRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return order_service.validate_coupon(db, payload.code, payload.subtotal)
-
-
-@router.post("/{order_id}/advance-status", response_model=OrderResponse)
-def advance_status(order_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return order_service.advance_status(db, user.id, order_id)
 
 
 @router.get("", response_model=OrderListResponse)
