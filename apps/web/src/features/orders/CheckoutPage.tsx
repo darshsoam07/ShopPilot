@@ -1,3 +1,4 @@
+import { CheckoutStepper } from './CheckoutStepper';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ export function CheckoutPage() {
   const cart = useQuery({ queryKey: ['cart'], queryFn: getCart });
   const client = useQueryClient();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [shipping, setShipping] = useState({ full_name: '', address: '', city: '', postal_code: '' });
   const fees = { DHL: 15.99, FedEx: 9.99, GLS: 7.99 };
   const [carrier, setCarrier] = useState<keyof typeof fees>('FedEx');
@@ -34,8 +35,7 @@ export function CheckoutPage() {
   if (!cart.data.items.length) return <p className="state-panel">Your cart is empty. <Link to="/">Browse products</Link></p>;
   const total = (Number(applied?.final_total ?? cart.data.subtotal) + fees[carrier]).toFixed(2);
   return <section className="page-section checkout-reference"><h1>Checkout</h1>
-    <ol className="checkout-progress">{['Sign in','Address details','Payment method','Preview & confirm'].map((label,i) =>
-      <li key={label} data-active={i <= step} aria-current={i === step ? 'step' : undefined}>{label}</li>)}</ol>
+    <CheckoutStepper currentStep={step} onStepSelect={place.isPending ? undefined : setStep} />
     <div className="checkout-columns"><div className="checkout-panel">
     {step === 1 && <form onSubmit={e => { e.preventDefault(); setStep(2); }}><h2>Delivery details</h2>
       {(['full_name','address','city','postal_code'] as const).map((key,i) => <label key={key}>{['Recipient name','Street address','City','Postal code'][i]}

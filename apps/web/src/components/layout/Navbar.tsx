@@ -2,16 +2,13 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useCartDrawer } from '../../features/cart/CartDrawerContext';
 import { getCart } from '../../features/cart/api';
 export function Navbar({ open }: { open: () => void }) {
+  const { openDrawer } = useCartDrawer();
   const [expanded, setExpanded] = useState(false);
   const location = useLocation();
   useEffect(() => { setExpanded(false); }, [location.key]);
-  const [theme, setTheme] = useState(() => localStorage.getItem('shoppilot_theme') || 'editorial');
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem('shoppilot_theme', theme);
-  }, [theme]);
   const { user, logout, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const clearPrivateQueries = () => {
@@ -41,9 +38,8 @@ export function Navbar({ open }: { open: () => void }) {
             <input type="search" name="q" aria-label="Search the collection" placeholder="Search products" maxLength={100} />
           </form>
           <button onClick={() => { setExpanded(false); open(); }} title="Ctrl or Cmd + K">Ask ShopPilot</button>
-          <select aria-label="Storefront palette" value={theme} onChange={e => setTheme(e.target.value)}><option value="editorial">Editorial Alabaster</option><option value="swiss">Swiss Gallery</option><option value="matcha">Organic Matcha</option><option value="violet">Soft Cloud & Violet</option></select>
           {isAuthenticated ? <>
-            <Link className="cart-link" to="/cart">Cart <span className="cart-count">{cartQuery.data?.item_count ?? 0}</span></Link>
+            <button className="cart-link" aria-haspopup="dialog" onClick={openDrawer}>Bag <span className="cart-count">{cartQuery.data?.item_count ?? 0}</span></button>
             <span className="header-user">{user?.full_name.split(' ')[0]}</span>
             <button type="button" className="header-text-button" onClick={handleLogout}>Sign out</button>
           </> : <><Link className="header-text-button" to="/login">Sign in</Link><Link className="sign-in-link" to="/register">Create account</Link></>}

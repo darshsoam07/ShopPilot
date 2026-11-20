@@ -2,10 +2,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from './api';
-import { StorefrontCampaign } from './StorefrontCampaign';
+import { HeroBento } from '../../components/home/HeroBento';
 import { ProductCard } from './ProductCard';
 
-export function HomePage() {
+export function HomePage({ onOpenPalette }: { onOpenPalette: () => void }) {
   const [params, setParams] = useSearchParams();
   const query = useDebounce(params.toString(), 250);
   const update = (name: string, value: string) => {
@@ -18,7 +18,7 @@ export function HomePage() {
 
   return (
     <>
-      <StorefrontCampaign />
+      <HeroBento onOpenPalette={onOpenPalette} />
       <section className="catalog-section featured" id="featured">
         <div className="section-heading">
           <div><h2>The storefront selection</h2>

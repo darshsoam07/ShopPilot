@@ -2,6 +2,7 @@ export interface Product {
   id: number;
   name: string;
   category: string;
+  family?: string | null;
   brand: string | null;
   gallery_images: string[];
   specifications: Record<string, string>;

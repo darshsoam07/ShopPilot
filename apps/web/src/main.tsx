@@ -1,3 +1,9 @@
+import './styles/tokens.css';
+import './styles/base.css';
+import './styles/components.css';
+import './styles/phase3.css';
+import { MotionConfig } from 'motion/react';
+import { CartDrawerProvider } from './features/cart/CartDrawerContext';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider><App /></AuthProvider>
+        <AuthProvider><MotionConfig reducedMotion="user"><CartDrawerProvider><App /></CartDrawerProvider></MotionConfig></AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>,

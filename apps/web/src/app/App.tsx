@@ -1,8 +1,10 @@
+import { CartDrawer } from '../components/layout/CartDrawer';
+import { useCartDrawer } from '../features/cart/CartDrawerContext';
+import { SmoothScroll } from '../components/motion/SmoothScroll';
 import { CatalogPage } from '../features/catalog/CatalogPage';
 import { ProductDetailPage } from '../features/catalog/ProductDetailPage';
-import { AssistantDrawer } from '../components/layout/AssistantDrawer';
+import { CommandPalette } from '../components/layout/CommandPalette';
 import { Link, Route, Routes } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { HomePage } from '../features/catalog/HomePage';
 import { AssistantPage } from '../features/assistant/AssistantPage';
@@ -16,26 +18,29 @@ import { Navbar } from '../components/layout/Navbar';
 import { CheckoutPage } from '../features/orders/CheckoutPage';
 
 export default function App() {
+  const { isOpen, closeDrawer } = useCartDrawer();
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
-  const client = useQueryClient();
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
+        closeDrawer();
         setOpen(value => !value);
       } else if (event.key === 'Escape') setOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [closeDrawer]);
   return (
-    <div className="app-shell">
+    <SmoothScroll paused={open || (isOpen && !!user)}>
+    <div className="app-shell" inert={open || (isOpen && !!user)}>
       <a className="skip-content" href="#store-content">Skip to content</a>
       <Navbar open={() => setOpen(true)} />
       <main id="store-content" tabIndex={-1}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage onOpenPalette={() => setOpen(true)} />} />
           <Route path="/products" element={<CatalogPage />} />
           <Route path="/products/:productId" element={<ProductDetailPage openAssistant={() => setOpen(true)} />} />
           <Route path="/assistant" element={<AssistantPage />} />
@@ -51,8 +56,6 @@ export default function App() {
           </Route>
         </Routes>
       </main>
-      <button className="copilot-trigger" onClick={() => setOpen(true)}>✦ Ask ShopPilot</button>
-      <AssistantDrawer key={user?.id ?? 'guest'} isOpen={open} onClose={() => setOpen(false)} onCartUpdated={() => client.invalidateQueries({ queryKey: ['cart'] })} />
       <footer className="site-footer">
         <Link className="footer-brand" to="/">ShopPilot</Link>
         <span>© {new Date().getFullYear()} ShopPilot</span>
@@ -63,5 +66,8 @@ export default function App() {
         </nav>
       </footer>
     </div>
+    <CommandPalette key={user?.id ?? "guest"} isOpen={open} onClose={() => setOpen(false)} />
+    {user && <CartDrawer key={user.id} />}
+    </SmoothScroll>
   );
 }
