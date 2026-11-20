@@ -31,3 +31,6 @@ Thumbs.db
 # Local development uploads
 media/
 apps/api/media/
+
+# Local design audit notes & screenshots
+docs/design/
