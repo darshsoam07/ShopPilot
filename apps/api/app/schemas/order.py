@@ -27,6 +27,9 @@ class ShippingDetails(BaseModel):
 
 
 class CheckoutRequest(BaseModel):
+    billing_address: str | None = Field(None, max_length=255)
+    address_id: int | None = Field(None, gt=0)
+    idempotency_key: str | None = Field(None, min_length=1, max_length=100)
     carrier: Literal["DHL", "FedEx", "GLS"] | None = None
     simulate_failure: bool = False
     shipping_address: ShippingAddress | None = None
@@ -36,7 +39,7 @@ class CheckoutRequest(BaseModel):
 
     @model_validator(mode="after")
     def one_address(self):
-        if (self.shipping_address is None) == (self.shipping is None):
+        if sum(v is not None for v in (self.shipping_address, self.shipping, self.address_id)) != 1:
             raise ValueError("Supply one shipping address")
         return self
 
@@ -67,7 +70,41 @@ class OrderItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AddressDetails(ShippingAddress):
+    state: str | None = Field(None, min_length=2, max_length=100)
+
+
+class AddressWrite(BaseModel):
+    details: AddressDetails
+    is_default: bool = False
+
+
+class AddressPatch(BaseModel):
+    details: AddressDetails | None = None
+    is_default: bool | None = None
+
+
+class AddressResponse(AddressWrite):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaymentResponse(BaseModel):
+    id: int
+    order_id: int | None
+    payment_method: str
+    status: str
+    amount: Decimal
+    currency: str
+    provider: str
+    reference: str
+    failure_reason: str | None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderResponse(BaseModel):
+    payment: PaymentResponse | None = None
     id: int
     status: str
     total_amount: Decimal
@@ -88,3 +125,7 @@ class OrderResponse(BaseModel):
 class OrderListResponse(BaseModel):
     items: list[OrderResponse]
     total: int
+
+
+class OrderStatusUpdate(BaseModel):
+    status: Literal["PROCESSING", "SHIPPED", "DELIVERED"]

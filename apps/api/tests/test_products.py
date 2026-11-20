@@ -1,5 +1,9 @@
 from decimal import Decimal
 
+import pytest
+from sqlalchemy import event, select
+from sqlalchemy.orm import sessionmaker
+
 from app.models.product import Product
 
 
@@ -63,3 +67,61 @@ def test_catalog_facets_precede_pagination_and_exclude_hidden(client, db_session
     data = client.get("/api/v1/products/catalog?categories=Mobile&page=2&page_size=1").json()
     assert data["total"] == 2 and len(data["items"]) == 1
     assert data["categories"] == {"Mobile": 2, "Lighting": 1}
+
+
+def test_nova_seed_media_matches_finish():
+    from scripts.seed_products import SAMPLE_PRODUCTS
+
+    by_sku = {item["sku"]: item for item in SAMPLE_PRODUCTS}
+    assert by_sku["AUD-NOVA-001"]["image_url"] == "/demo/nova.jpg"
+    assert by_sku["AUD-NOVA-001"]["gallery_images"] == [
+        f"/demo/nova-detail-{i}.jpg" for i in range(1, 5)
+    ]
+    assert by_sku["AUD-NOVA-ALB"]["image_url"] is None
+    assert by_sku["AUD-NOVA-ALB"]["gallery_images"] == []
+
+
+LEGACY_PHOTO = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900"
+DEMO_GALLERY = [f"/demo/nova-detail-{i}.jpg" for i in range(1, 5)]
+UPLOAD = "/media/alabaster.webp"
+OTHER_SIZE = LEGACY_PHOTO.replace("900", "1200")
+
+
+@pytest.mark.parametrize(("family", "finish", "primary", "gallery", "expected_primary", "expected_gallery"), [
+    ("nova", "Alabaster", "/demo/nova.jpg", DEMO_GALLERY, None, []),
+    (None, None, LEGACY_PHOTO, [], None, []),
+    ("nova", "Alabaster", UPLOAD, [DEMO_GALLERY[0], UPLOAD, LEGACY_PHOTO, OTHER_SIZE], UPLOAD, [UPLOAD, OTHER_SIZE]),
+    ("nova", "Alabaster", UPLOAD, [UPLOAD], UPLOAD, [UPLOAD]),
+    ("other", "Alabaster", LEGACY_PHOTO, [], LEGACY_PHOTO, []),
+    ("nova", "Obsidian", "/demo/nova.jpg", DEMO_GALLERY, "/demo/nova.jpg", DEMO_GALLERY),
+])
+def test_reseed_existing_alabaster(engine, db_session, monkeypatch, family, finish, primary, gallery,
+                                   expected_primary, expected_gallery):
+    from scripts import seed_products
+
+    monkeypatch.setattr(seed_products, "SessionLocal", sessionmaker(bind=engine))
+    seed_products.main()
+    alabaster = db_session.scalar(select(Product).where(Product.sku == "AUD-NOVA-ALB"))
+    alabaster.family = family
+    alabaster.specifications = {"Finish": finish} if finish else {}
+    alabaster.image_url, alabaster.gallery_images = primary, gallery
+    unrelated = add_product(db_session, name="Other", slug="other", sku="OTHER")
+    unrelated.image_url = "/demo/nova-detail-5.jpg"
+    unrelated.gallery_images = [LEGACY_PHOTO]
+    db_session.commit()
+
+    seed_products.main()
+    db_session.expire_all()
+    assert (alabaster.image_url, alabaster.gallery_images) == (expected_primary, expected_gallery)
+    assert (unrelated.image_url, unrelated.gallery_images) == ("/demo/nova-detail-5.jpg", [LEGACY_PHOTO])
+    obsidian = db_session.scalar(select(Product).where(Product.sku == "AUD-NOVA-001"))
+    assert (obsidian.image_url, obsidian.gallery_images) == ("/demo/nova.jpg", DEMO_GALLERY)
+
+    writes = []
+    @event.listens_for(engine, "before_cursor_execute")
+    def record_writes(conn, cursor, statement, parameters, context, executemany):
+        if context.isupdate or context.isinsert or context.isdelete:
+            writes.append(statement)
+
+    seed_products.main()
+    assert writes == []

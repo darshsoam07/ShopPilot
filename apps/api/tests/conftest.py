@@ -18,7 +18,10 @@ import app.models  # noqa: F401 — register all models with SQLAlchemy metadata
 
 
 @pytest.fixture()
-def engine():
+def engine(request):
+    if request.config.pluginmanager.hasplugin("scripts.postgres_seed_qa"):
+        yield request.getfixturevalue("postgres_seed_engine")
+        return
     test_engine = create_engine(
         "sqlite+pysqlite://",
         connect_args={"check_same_thread": False},

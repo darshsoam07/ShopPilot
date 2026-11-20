@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { sendAssistantMessage } from "../../features/assistant/api";
 import { useAuth } from "../../context/AuthContext";
@@ -92,10 +92,41 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
     }
   };
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const overlay = overlayRef.current;
+    if (!isOpen || !overlay?.parentElement) return;
+    const opener = document.activeElement;
+    const background = Array.from(overlay.parentElement.children).filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && el !== overlay && !el.inert
+    );
+    background.forEach(el => { el.inert = true; });
+    const controls = () => Array.from(overlay.querySelectorAll<HTMLElement>(
+      'button:enabled, input:enabled, a[href]'
+    )).filter(el => el.tabIndex >= 0 && el.getClientRects().length > 0);
+    (overlay.querySelector<HTMLElement>('input:enabled') ?? controls()[0])?.focus();
+    const containTab = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const ordered = controls();
+      const first = ordered[0];
+      const last = ordered[ordered.length - 1];
+      if (event.shiftKey ? document.activeElement === first : document.activeElement === last) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+      }
+    };
+    overlay.addEventListener('keydown', containTab);
+    return () => {
+      overlay.removeEventListener('keydown', containTab);
+      background.forEach(el => { el.inert = false; });
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div
+    <div ref={overlayRef}
       style={{
         position: "fixed",
         inset: 0,
@@ -156,7 +187,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
               </span>
             )}
           </div>
-          <button
+          <button aria-label="Close assistant"
             onClick={onClose}
             style={{
               background: "transparent",
@@ -172,7 +203,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
         </header>
 
         {/* Message Stream */}
-        <div
+        <div data-lenis-prevent
           style={{
             flex: 1,
             overflowY: "auto",
@@ -324,7 +355,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
           }}
         >
           <input
-            autoFocus aria-label="Message ShopPilot" maxLength={1000} type="text"
+            aria-label="Message ShopPilot" maxLength={1000} type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={

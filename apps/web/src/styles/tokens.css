@@ -1,0 +1,54 @@
+/* apps/web/src/styles/tokens.css */
+:root {
+  /* Core Surfaces */
+  --bg-canvas: #F7F6F2;
+  --bg-surface: #EFECE6;
+  --bg-elevated: #FFFFFF;
+  --bg-glass: rgba(247, 246, 242, 0.84);
+
+  /* Ink & Borders */
+  --ink-primary: #111111;
+  --ink-secondary: #52514D;
+  --ink-muted: #6B6A65;
+  --ink-inverse: #F7F6F2;
+  --border-hairline: rgba(17, 17, 17, 0.11);
+  --border-strong: rgba(17, 17, 17, 0.28);
+
+  /* Accents (WCAG AA Compliant) */
+  --accent-fill: #FF4D00;        /* Use ONLY with --ink-primary text */
+  --accent-text: #C23B00;        /* ~5.1:1 contrast on #F7F6F2 */
+  --status-success: #146C43;
+  --status-danger: #B42318;
+
+  /* Typography */
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Fluid Type Scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: clamp(1.25rem, 1.8vw, 1.5rem);
+  --text-2xl: clamp(1.75rem, 3vw, 2.5rem);
+  --text-hero: clamp(2.75rem, 6.5vw, 5.5rem);
+
+  /* Spacing & Layout */
+  --container-max: 1400px;
+  --gutter: clamp(1.25rem, 3vw, 3rem);
+  --nav-height: 72px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+
+  /* Motion Curves */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-fast: cubic-bezier(0.16, 1, 0.3, 1);
+  --z-nav: 40;
+  --z-drawer: 60;
+  --z-palette: 80;
+}
