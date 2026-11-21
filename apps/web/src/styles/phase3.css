@@ -178,15 +178,18 @@
 
 .editorial-hero__backdrop {
   position: absolute;
-  top: 22%;
+  top: 34%;
   left: 0;
+  width: 100%;
+  text-align: center;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(5rem, 16vw, 14rem);
-  letter-spacing: -0.04em;
+  font-size: clamp(2rem, 8vw, 8rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
   color: rgba(17, 17, 17, 0.04);
   z-index: 0;
 }

@@ -16,6 +16,8 @@ export function ProductImage({ url, name, priority = false }: ProductImageProps)
   const apiOrigin = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
   return (
     <img className="catalog-product-photo" src={url.startsWith('/media/') ? apiOrigin + url : url}
-      alt={name} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} onError={() => setFailedUrl(url)} />
+      width={900} height={1125} decoding="async" alt={name}
+      loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'}
+      onError={() => setFailedUrl(url)} />
   );
 }

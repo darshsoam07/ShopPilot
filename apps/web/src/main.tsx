@@ -1,6 +1,4 @@
-import "@fontsource-variable/fraunces";
-import "@fontsource-variable/instrument-sans";
-import "@fontsource-variable/geist-mono";
+import './styles.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
@@ -13,7 +11,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import App from './app/App';
 import { AuthProvider } from './context/AuthContext';
-import './styles.css';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 } },

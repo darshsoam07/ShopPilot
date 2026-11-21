@@ -35,7 +35,7 @@ export function HeroBento({ onOpenPalette }: HeroBentoProps) {
             aria-hidden="true"
             className="editorial-hero__backdrop"
           >
-            ENGINEERED OBJECTS — STUDIO
+            STUDIO OBJECTS
           </motion.div>
 
           <div className="editorial-hero__grid">

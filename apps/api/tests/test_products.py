@@ -77,19 +77,39 @@ def test_nova_seed_media_matches_finish():
     assert by_sku["AUD-NOVA-001"]["gallery_images"] == [
         f"/demo/nova-detail-{i}.jpg" for i in range(1, 5)
     ]
-    assert by_sku["AUD-NOVA-ALB"]["image_url"] is None
+    assert by_sku["AUD-NOVA-ALB"]["image_url"].startswith("https://images.unsplash.com/")
     assert by_sku["AUD-NOVA-ALB"]["gallery_images"] == []
+    assert len(SAMPLE_PRODUCTS) == 16
+    assert len({item["sku"] for item in SAMPLE_PRODUCTS}) == 16
 
 
 LEGACY_PHOTO = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900"
+ALABASTER_PHOTO = "https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=85"
 DEMO_GALLERY = [f"/demo/nova-detail-{i}.jpg" for i in range(1, 5)]
 UPLOAD = "/media/alabaster.webp"
 OTHER_SIZE = LEGACY_PHOTO.replace("900", "1200")
 
 
+def test_studio_seed_has_six_variant_families_and_unique_product_photography():
+    from scripts.seed_products import SAMPLE_PRODUCTS
+
+    assert len(SAMPLE_PRODUCTS) == 16
+    assert len({item["sku"] for item in SAMPLE_PRODUCTS}) == 16
+    assert len({item["slug"] for item in SAMPLE_PRODUCTS}) == 16
+
+    grouped = {}
+    for item in SAMPLE_PRODUCTS:
+        grouped.setdefault(item.get("family"), []).append(item)
+        assert item["image_url"].startswith(("https://images.unsplash.com/", "/demo/"))
+        assert "placehold.co" not in item["image_url"]
+
+    assert sorted(len(products) for products in grouped.values()) == [2, 2, 2, 2, 3, 5]
+    assert len({item["image_url"] for item in SAMPLE_PRODUCTS}) >= 12
+
+
 @pytest.mark.parametrize(("family", "finish", "primary", "gallery", "expected_primary", "expected_gallery"), [
-    ("nova", "Alabaster", "/demo/nova.jpg", DEMO_GALLERY, None, []),
-    (None, None, LEGACY_PHOTO, [], None, []),
+    ("nova", "Alabaster", "/demo/nova.jpg", DEMO_GALLERY, ALABASTER_PHOTO, []),
+    (None, None, LEGACY_PHOTO, [], ALABASTER_PHOTO, []),
     ("nova", "Alabaster", UPLOAD, [DEMO_GALLERY[0], UPLOAD, LEGACY_PHOTO, OTHER_SIZE], UPLOAD, [UPLOAD, OTHER_SIZE]),
     ("nova", "Alabaster", UPLOAD, [UPLOAD], UPLOAD, [UPLOAD]),
     ("other", "Alabaster", LEGACY_PHOTO, [], LEGACY_PHOTO, []),
