@@ -413,3 +413,116 @@
   .product-card .quick-add-bar { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .product-card:hover .quick-add-bar, .product-card:focus-within .quick-add-bar { opacity: 1; pointer-events: auto; }
 }
+
+
+/* Canonical catalogue card rules; this file loads after the legacy storefront sheet. */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.product-card__media {
+  aspect-ratio: 4 / 5;
+  border: 0;
+  border-radius: 0;
+}
+
+.product-card__media > a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.product-card__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.product-card__img .catalog-product-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-card__meta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: 0;
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.product-card__meta > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-card__title {
+  display: -webkit-box;
+  min-height: 2.5rem;
+  margin: var(--space-1) 0 0;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.product-card__title a { color: inherit; }
+
+.product-card__price {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.product-sku {
+  display: block;
+  margin: var(--space-1) var(--space-4) var(--space-4);
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+}
+
+.product-card__badge,
+.quick-add-bar__btn {
+  background: var(--paper);
+  backdrop-filter: none;
+}
+
+.quick-add-bar__btn {
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .product-grid { grid-template-columns: minmax(0, 1fr); }
+}
