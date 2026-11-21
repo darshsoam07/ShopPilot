@@ -1,3 +1,6 @@
+import "@fontsource-variable/fraunces";
+import "@fontsource-variable/instrument-sans";
+import "@fontsource-variable/geist-mono";
 import './styles.css';
 import './styles/tokens.css';
 import './styles/base.css';

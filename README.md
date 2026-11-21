@@ -23,22 +23,22 @@ Still planned: category management, payment gateway integration, real LLM orches
 - [Database model](docs/database-schema.md)
 - [Development roadmap](docs/development-roadmap.md)
 - [Code review remediation status](docs/code-review-remediation.md)
-- [Design system â€” Editorial Alabaster & Obsidian](docs/design-system.md)
+- [Design system — Editorial Alabaster & Obsidian](docs/design-system.md)
 - [Initial requirements summary](docs/requirements.md)
 
 ## Repository structure
 
 ```text
 shoppilot/
-â”œâ”€â”€ apps/
-â”‚   â”œâ”€â”€ web/                  # React + TypeScript + Vite
-â”‚   â””â”€â”€ api/                  # FastAPI + SQLAlchemy + Alembic
-â”œâ”€â”€ packages/contracts/      # Reserved for generated/shared API contracts
-â”œâ”€â”€ docs/                    # Product and engineering documentation
-â”œâ”€â”€ infra/                   # Reserved for later DevOps implementation
-â”œâ”€â”€ scripts/                 # Repository-level helper scripts
-â”œâ”€â”€ Makefile
-â””â”€â”€ README.md
+├── apps/
+│   ├── web/                  # React + TypeScript + Vite
+│   └── api/                  # FastAPI + SQLAlchemy + Alembic
+├── packages/contracts/      # Reserved for generated/shared API contracts
+├── docs/                    # Product and engineering documentation
+├── infra/                   # Reserved for later DevOps implementation
+├── scripts/                 # Repository-level helper scripts
+├── Makefile
+└── README.md
 ```
 
 ## Prerequisites
@@ -113,7 +113,7 @@ Useful endpoints:
 | GET | `/api/v1/orders/{order_id}` | Get one owned order |
 | POST | `/api/v1/assistant/recommendations` | Catalogue-grounded, rule-based product recommendations |
 | GET | `/api/v1/assistant/orders/{order_id}` | Authenticated customer order lookup for assistant tooling |
-| GET | `/api/v1/admin/orders` | Admin order history across customers. Filter by status and paginate with limit (1–100) and offset. |
+| GET | `/api/v1/admin/orders` | Admin order history across customers. Filter by status and paginate with limit (1�100) and offset. |
 | PATCH | `/api/v1/admin/orders/{order_id}/status` | Admin fulfillment. Send the next status in the status field. Invalid transitions return 409. |
 | GET/POST | `/api/v1/addresses` | List or create owned delivery addresses. |
 | PATCH/DELETE | `/api/v1/addresses/{address_id}` | Edit, set default or delete an owned address. |
@@ -130,9 +130,7 @@ UPDATE users SET role = 'admin' WHERE email = 'admin@example.com';
 
 Do not expose role changes through public registration. The Admin navigation and `/admin` route are shown only to an authenticated account whose backend user role is `admin`; the API independently checks that role on every admin request.
 
-## 4. Seed the 16-product studio catalogue
-
-The idempotent seed creates 16 sellable SKUs across six variant families and five storefront categories. Each SKU has its own catalogue image, price, stock record, and family metadata for the product-detail variant selector. Re-running the seed repairs missing or known placeholder media without resetting stock quantities or replacing manually uploaded images.
+## 4. Seed sample products
 
 Open another terminal, activate the backend virtual environment, then run from `apps/api`:
 
