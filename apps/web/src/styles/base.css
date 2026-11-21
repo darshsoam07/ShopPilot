@@ -6,8 +6,8 @@
 }
 
 html {
-  background-color: var(--bg-canvas);
-  color: var(--ink-primary);
+  background-color: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -16,8 +16,9 @@ html {
 
 body {
   margin: 0;
-  background-color: var(--bg-canvas);
-  color: var(--ink-primary);
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
   line-height: 1.5;
   overflow-x: hidden;
 }
