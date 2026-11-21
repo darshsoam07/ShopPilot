@@ -175,7 +175,16 @@ def main() -> None:
                 exists.gallery_images = item["gallery_images"]
             if exists and item.get("family") and not exists.family:
                 exists.family = item["family"]
-                exists.specifications = {**item["specifications"], **exists.specifications}
+                exists.specifications = {**item["specifications"], **(exists.specifications or {})}
+            if exists and item.get("brand") and not exists.brand:
+                exists.brand = item["brand"]
+            if exists and item.get("family") and item["sku"] != "AUD-NOVA-001" and (
+                not exists.image_url
+                or exists.image_url in INHERITED_NOVA_PHOTOS
+                or (exists.image_url or "").startswith("https://placehold.co/")
+            ):
+                exists.image_url = item["image_url"]
+                exists.gallery_images = item["gallery_images"]
             if exists and ((exists.image_url or "").startswith("https://placehold.co/") or (
                 item["sku"] == "WAT-PULSE-002" and (exists.image_url or "").endswith("baf30e?w=900")
             )):
