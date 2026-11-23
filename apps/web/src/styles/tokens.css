@@ -1,162 +1,154 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Design tokens. Single source of truth. Components never hardcode values. */
-
-@layer base {
+/* ShopPilot design tokens: Bone & Oxide.
+   Single source of truth. Components never hardcode colors, sizes or timings.
+   Contrast ratios are computed against the surface named in the comment. */
+@layer tokens {
   :root {
-    /* ── Type ───────────────────────────────────────────── */
-    --font-display: "Fraunces Variable", Fraunces, ui-serif, Georgia, serif;
-    --font-sans: "Instrument Sans Variable", "Instrument Sans",
-                 ui-sans-serif, system-ui, sans-serif;
+    color-scheme: light;
+
+    /* Type */
+    --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+    --font-sans: "Instrument Sans Variable", "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
     --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", monospace;
 
-    /* 11 / 12 / 14 / 16 / 18 / 24 / 32 / 48 / 64 */
-    --text-2xs: 0.6875rem;
-    --text-2xs--line: 1rem;
-    --text-2xs--track: 0.04em;
+    /* 11 / 12 / 14 / 16 / 18 fixed; 24 to 72 fluid between 360px and 1440px */
+    --text-2xs: 0.6875rem;  --text-2xs--line: 1rem;     --text-2xs--track: 0.04em;
+    --text-xs:  0.75rem;    --text-xs--line: 1rem;      --text-xs--track: 0.02em;
+    --text-sm:  0.875rem;   --text-sm--line: 1.25rem;   --text-sm--track: 0.005em;
+    --text-base: 1rem;      --text-base--line: 1.5rem;  --text-base--track: 0em;
+    --text-lg:  1.125rem;   --text-lg--line: 1.75rem;   --text-lg--track: -0.005em;
+    --text-xl:  clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+    --text-xl--line: 1.2;   --text-xl--track: -0.01em;
+    --text-2xl: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);
+    --text-2xl--line: 1.1;  --text-2xl--track: -0.015em;
+    --text-3xl: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);
+    --text-3xl--line: 1.04; --text-3xl--track: -0.02em;
+    --text-4xl: clamp(2.75rem, 1.6rem + 4.6vw, 4.5rem);
+    --text-4xl--line: 1;    --text-4xl--track: -0.025em;
+    --text-hero: var(--text-4xl);
 
-    --text-xs: 0.75rem;
-    --text-xs--line: 1rem;
-    --text-xs--track: 0.02em;
+    /* Color: surfaces */
+    --paper:       #F3F0E8;  /* page */
+    --paper-sunk:  #EAE6DA;  /* inputs, image wells, table heads */
+    --surface:     #FAF8F3;  /* cards, drawers, dialogs */
 
-    --text-sm: 0.875rem;
-    --text-sm--line: 1.25rem;
-    --text-sm--track: 0.005em;
+    /* Color: ink */
+    --ink:         #1B1A17;  /* 15.3:1 on paper */
+    --ink-muted:   #5E5A50;  /* 6.0:1 on paper, 5.5:1 on paper-sunk */
+    --ink-inverse: #F3F0E8;  /* on ink */
 
-    --text-base: 1rem;
-    --text-base--line: 1.5rem;
-    --text-base--track: 0em;
+    /* Color: lines */
+    --line:         #DDD8CA; /* hairlines, decorative */
+    --line-strong:  #C9C3B2;
+    --line-control: #8F8A7B; /* control boundaries, 3.0:1 on paper */
 
-    --text-lg: 1.125rem;
-    --text-lg--line: 1.75rem;
-    --text-lg--track: -0.005em;
+    /* Color: accent (oxide). Signal only: active state, focus, links, small marks. */
+    --accent:        #B33D1D; /* 5.1:1 on paper, 4.7:1 on paper-sunk, 4.8:1 on accent-soft */
+    --accent-hover:  #8F2F14; /* 7.1:1 on paper */
+    --accent-soft:   #F6E7DD;
+    --accent-on-dark: #E8744F; /* 5.8:1 on ink */
 
-    --text-xl: 1.5rem;
-    --text-xl--line: 1.875rem;
-    --text-xl--track: -0.015em;
+    /* Color: status (always paired with text or an icon) */
+    --success:       #2F6B4F; /* 5.5:1 on paper */
+    --success-soft:  #E3EBDD;
+    --danger:        #8A1F2B; /* 8.0:1 on paper */
+    --danger-soft:   #F3DDD9;
 
-    --text-2xl: 2rem;
-    --text-2xl--line: 2.25rem;
-    --text-2xl--track: -0.02em;
+    /* Color: the one dark band per page */
+    --band:          #1B1A17;
+    --band-ink:      #F3F0E8;
+    --band-muted:    #A8A396; /* 6.9:1 on band */
+    --band-line:     #3A3833;
 
-    --text-3xl: 3rem;
-    --text-3xl--line: 3.125rem;
-    --text-3xl--track: -0.025em;
+    --scrim: rgb(27 26 23 / 0.5); /* flat; no blur */
 
-    --text-4xl: 4rem;
-    --text-4xl--line: 1em;
-    --text-4xl--track: -0.03em;
-
-    /* ── Color ──────────────────────────────────────────── */
-    --paper:        #FAF8F5;
-    --paper-sunk:   #F2EFE9;   /* inputs, table headers, image wells */
-    --ink:          #14110F;
-    --ink-muted:    #6B645C;   /* 5.4:1 on paper */
-    --line:         #E6E1D8;
-    --line-strong:  #D3CCBF;
-    --accent:       #1F5D46;
-    --accent-hover: #174A37;
-    --accent-soft:  #E8EFEA;   /* accent tint for badges only */
-    --danger:       #8C2F2F;
-
-    /* Legacy compatibility aliases */
-    --bg-canvas:    var(--paper);
-    --bg-surface:   var(--paper-sunk);
-    --bg-elevated:  var(--paper);
-    --ink-primary:  var(--ink);
-    --ink-secondary: var(--ink-muted);
-    --border-hairline: var(--line);
-    --color-canvas: var(--paper);
-    --color-surface: var(--paper-sunk);
-    --color-ink:    var(--ink);
-    --color-muted:  var(--ink-muted);
-    --shop-canvas:  var(--paper);
-    --shop-panel:   var(--paper-sunk);
-    --shop-accent:  var(--accent);
-
-    /* ── Space (4px base) ───────────────────────────────── */
+    /* Space (4px base) */
     --space-1: 0.25rem;  --space-2: 0.5rem;   --space-3: 0.75rem;
     --space-4: 1rem;     --space-5: 1.25rem;  --space-6: 1.5rem;
     --space-8: 2rem;     --space-10: 2.5rem;  --space-12: 3rem;
     --space-16: 4rem;    --space-20: 5rem;    --space-24: 6rem;
 
-    /* ── Radius ─────────────────────────────────────────── */
-    --radius-sm: 4px;    /* inputs, buttons, badges */
-    --radius-md: 6px;    /* cards, panels */
+    /* Layout */
+    --gutter: 1rem;
+    --container-max: 1200px;
+    --section-space: 4rem;
+    --control: 2.75rem;          /* 44px touch target */
+    --nav-height: 4.5rem;        /* 72px */
+    --nav-height-compact: 3.5rem;/* 56px */
+
+    /* Radius */
+    --radius-sm: 4px;   /* inputs, buttons, badges */
+    --radius-md: 6px;   /* cards, panels */
+    --radius-lg: 10px;  /* dialogs, drawers */
+    --radius-pill: 999px;
     --radius-full: 999px;
 
-    /* ── Shadow (overlays only) ─────────────────────────── */
+    /* Elevation: overlays only. Cards use hairlines. */
     --shadow-pop:
-      0 1px 2px rgb(20 17 15 / 0.06),
-      0 8px 24px -8px rgb(20 17 15 / 0.12);
+      0 1px 2px rgb(27 26 23 / 0.06),
+      0 8px 24px -8px rgb(27 26 23 / 0.16);
 
-    /* ── Motion ─────────────────────────────────────────── */
-    --ease: cubic-bezier(0.2, 0, 0, 1);
-    --dur-hover: 150ms;
-    --dur-enter: 200ms;
+    /* Z */
+    --z-header: 20;
+    --z-drawer: 40;
+    --z-palette: 50;
+    --z-toast: 60;
+
+    /* Motion. Curves and durations are the only ones components may use. */
+    --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);    /* entering, exiting, default */
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);   /* moving on screen */
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);    /* drawers and sheets */
+    --ease: var(--ease-out);
+    --ease-editorial: var(--ease-out);
+    --dur-press:  120ms;
+    --dur-hover:  160ms;
+    --dur-ui:     220ms;
+    --dur-enter:  260ms;
+    --dur-drawer: 380ms;
+    --dur-reveal: 450ms;   /* ceiling for scroll-triggered reveals */
+
+    /* Aliases kept while legacy surfaces are retired (see styles/legacy.css) */
+    --bg-canvas: var(--paper);
+    --bg-surface: var(--paper-sunk);
+    --bg-elevated: var(--surface);
+    --bg-glass: var(--paper);
+    --ink-primary: var(--ink);
+    --ink-secondary: var(--ink-muted);
+    --text-primary: var(--ink);
+    --text-secondary: var(--ink-muted);
+    --border-hairline: var(--line);
+    --border-strong: var(--line-strong);
+    --accent-fill: var(--accent);
+    --accent-text: var(--accent);
+    --accent-ai: var(--accent);
+    --status-success: var(--success);
+    --status-danger: var(--danger);
+    --color-canvas: var(--paper);
+    --color-surface: var(--surface);
+    --color-surface-soft: var(--paper-sunk);
+    --color-ink: var(--ink);
+    --color-muted: var(--ink-muted);
+    --color-accent: var(--accent);
+    --color-border: var(--line-strong);
+    --shop-canvas: var(--paper);
+    --shop-panel: var(--paper-sunk);
+    --shop-accent: var(--ink);
+    --bg-ai-panel: var(--paper-sunk);
+    --cta-bg: var(--ink);
+    --cta-text: var(--ink-inverse);
+    --font-heading: var(--font-display);
+    --font-body: var(--font-sans);
+    --radius: var(--radius-sm);
+    --line-shorthand: 1px solid var(--line-strong);
+    --lift: none;
+    --photo-radius: var(--radius-sm);
+    --state-surface: var(--paper-sunk);
+    --state-ink: var(--ink);
   }
 
-  * { border-color: var(--line); }
-
-  html {
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+  @media (min-width: 640px) {
+    :root { --gutter: 1.5rem; }
   }
-
-  body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: var(--text-base--line);
-  }
-
-  h1, h2, h3 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-variation-settings: "SOFT" 30, "WONK" 0;
-    letter-spacing: var(--text-2xl--track);
-  }
-
-  h1 { font-size: var(--text-3xl); line-height: var(--text-3xl--line);
-       letter-spacing: var(--text-3xl--track); }
-  h2 { font-size: var(--text-2xl); line-height: var(--text-2xl--line); }
-  h3 { font-size: var(--text-xl);  line-height: var(--text-xl--line);
-       letter-spacing: var(--text-xl--track); }
-
-  p { max-width: 62ch; }
-
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-}
-
-@layer utilities {
-  .tnum { font-variant-numeric: tabular-nums; }
-
-  .eyebrow {
-    font-size: var(--text-2xs);
-    line-height: var(--text-2xs--line);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    font-weight: 500;
-  }
-
-  .price {
-    font-variant-numeric: tabular-nums;
-    font-weight: 500;
-    letter-spacing: -0.01em;
+  @media (min-width: 1024px) {
+    :root { --gutter: 2rem; --section-space: 6rem; }
   }
 }

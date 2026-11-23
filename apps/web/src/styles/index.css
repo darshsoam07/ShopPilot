@@ -1,0 +1,9 @@
+/* Entry point. Loaded first in main.tsx so the layer order is fixed before any
+   other stylesheet (including feature-level CSS) declares a layer.
+   Native layer names deliberately avoid base/components/utilities, which
+   Tailwind v3 intercepts. Utilities stay unlayered so they always win. */
+@layer reset, tokens, foundation, legacy, ui, surfaces;
+
+@tailwind base;       /* preflight is disabled in tailwind.config.ts: only --tw-* defaults */
+@tailwind components;
+@tailwind utilities;

@@ -1,11 +1,13 @@
-import "@fontsource-variable/fraunces";
+import "@fontsource/instrument-serif/400.css";
 import "@fontsource-variable/instrument-sans";
 import "@fontsource-variable/geist-mono";
-import './styles.css';
-import './styles/tokens.css';
-import './styles/base.css';
-import './styles/components.css';
-import './styles/phase3.css';
+// index.css must stay first: it fixes the cascade layer order for every file below.
+import "./styles/index.css";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/legacy.css";
+import "./styles/components.css";
+import "./styles/phase3.css";
 import { MotionConfig } from 'motion/react';
 import { CartDrawerProvider } from './features/cart/CartDrawerContext';
 import React from 'react';

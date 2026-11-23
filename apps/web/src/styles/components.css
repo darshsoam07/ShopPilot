@@ -1,11 +1,12 @@
+/* Cart drawer, product card, SKU selector. Blur removed; scrim is a flat token. Rebuilt in Phase 3 (cart, card) and Phase 4 (SKU). */
+@layer ui {
 /* apps/web/src/styles/components.css */
 
 /* --- Cart Drawer & Shipping Meter --- */
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(17, 17, 17, 0.36);
-  backdrop-filter: blur(4px);
+  background: var(--scrim);
   z-index: var(--z-drawer);
 }
 
@@ -243,7 +244,6 @@
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
   background: var(--bg-glass);
-  backdrop-filter: blur(8px);
   border: 1px solid var(--border-hairline);
   font-family: var(--font-mono);
   font-size: 0.68rem;
@@ -268,7 +268,6 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-hairline);
   background: var(--bg-glass);
-  backdrop-filter: blur(10px);
   color: var(--ink-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -505,7 +504,6 @@
 .product-card__badge,
 .quick-add-bar__btn {
   background: var(--paper);
-  backdrop-filter: none;
 }
 
 .quick-add-bar__btn {
@@ -525,4 +523,5 @@
 
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: minmax(0, 1fr); }
+}
 }

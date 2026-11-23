@@ -1,11 +1,14 @@
+/* Wrapped in the surfaces layer so it keeps its place in the cascade. */
+@layer reset, tokens, foundation, legacy, ui, surfaces;
+@layer surfaces {
 .catalog-section.product-reference .detail-layout { grid-template-columns: minmax(0,3fr) minmax(0,2fr); margin-block: 1.5rem 4rem; }
 .product-reference .gallery-stage { aspect-ratio: 1.14; border-radius: 4px; overflow: hidden; background: var(--shop-panel); border: 1px solid var(--color-border); }
 .product-reference .gallery-stage img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .product-reference .gallery-thumbs button { border-radius: 3px; padding: 3px; }
 .product-reference .gallery-thumbs [aria-pressed=true] { outline: 2px solid var(--shop-accent); }
 .pdp-purchase { min-width: 0; }
-.pdp-purchase h1 { font: 600 clamp(2rem,3.4vw,4rem)/1.04 var(--font-display); letter-spacing: -.045em; margin: .65rem 0 1rem; overflow-wrap: anywhere; }
-.pdp-purchase > small { font-family: 'IBM Plex Mono', monospace; }
+.pdp-purchase h1 { font: 400 clamp(2rem,3.4vw,4rem)/1.04 var(--font-display); letter-spacing: -.03em; margin: .65rem 0 1rem; overflow-wrap: anywhere; }
+.pdp-purchase > small { font-family: var(--font-mono); }
 .pdp-purchase > strong { font-size: 1.65rem; }
 .pdp-purchase .sku-options { display: grid; gap: .4rem; border: 0; padding: 0; margin: 1.25rem 0; }
 .pdp-purchase .sku-options a { display: block; padding: .75rem; border: 1px solid currentColor; border-radius: 3px; text-decoration: none; }
@@ -15,7 +18,7 @@
 .pdp-purchase form input { width: 5rem; min-height: 44px; font: inherit; padding-inline: .5rem; }
 .pdp-purchase form button { flex: 1; min-height: 44px; }
 .pdp-purchase button:disabled { opacity: .55; }
-.product-reference :focus-visible { outline: 3px solid var(--shop-accent); outline-offset: 3px; }
+.product-reference :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .product-reference .spec-tiles div { background: transparent; border-radius: 0; border-top: 1px solid currentColor; }
 @media(max-width:850px) { .catalog-section.product-reference .detail-layout { grid-template-columns: minmax(0,1fr); } }
 @media(prefers-reduced-motion:no-preference) { .product-reference .gallery-thumbs button { transition: border-color .15s ease; } }
@@ -24,3 +27,4 @@
 .product-reference .gallery-actions button { min-height: 44px; color: var(--color-ink); }
 .product-reference .pdp-delivery { border-top: 1px solid var(--color-border); padding-block: 1rem; }
 .product-reference .pdp-purchase > button { background: transparent; border: 0; color: inherit; text-decoration: underline; min-height: 44px; cursor: pointer; }
+}

@@ -1,11 +1,12 @@
+/* Palette, hero, bento, checkout stepper. Blur removed. Rebuilt in Phase 3 and Phase 4. */
+@layer surfaces {
 /* apps/web/src/styles/phase3.css */
 
 /* --- Command Palette (Instant Open/Close) --- */
 .palette-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(17, 17, 17, 0.42);
-  backdrop-filter: blur(6px);
+  background: var(--scrim);
   z-index: var(--z-palette);
   display: flex;
   align-items: flex-start;
@@ -190,7 +191,7 @@
   font-size: clamp(2rem, 8vw, 8rem);
   line-height: 1;
   letter-spacing: -0.055em;
-  color: rgba(17, 17, 17, 0.04);
+  color: var(--scrim);
   z-index: 0;
 }
 
@@ -388,3 +389,4 @@
 .palette-followups button { flex-shrink: 0; font: inherit; color: var(--ink-secondary); border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); background: var(--bg-surface); padding: .4rem; }
 .palette-body { min-height: 0; }
 .palette-msg a { text-decoration: underline; }
+}
