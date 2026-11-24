@@ -35,7 +35,7 @@ Contrast ratios are computed (WCAG 2.x relative luminance).
 `.band` sets `background: var(--band)` and flips `--ink`, `--ink-muted`, `--line`,
 `--accent` and `--ink-inverse` for everything inside it. On the band: text 15.3:1,
 muted (`--band-muted` #A8A396) 6.9:1, accent (`--accent-on-dark` #E8744F) 5.8:1.
-Use at most one band per page (home hero and campaign, PDP gallery, checkout summary).
+Use at most one band per page; adjacent sections may share it (the home hero and campaign are one band).
 
 ### Accent restraint
 
@@ -110,8 +110,13 @@ styles/
   tokens.css      every custom property, plus temporary aliases
   base.css        reset, typography, focus, .band, buttons, .skeleton, reduced motion
   legacy.css      retokenized old styles.css, shrinking
-  components.css  cart drawer, product card, SKU selector
-  phase3.css      palette, hero, bento, checkout stepper
+  shell.css       header, navigation, chips, segmented control, shared small controls
+  product-card.css product card, grid, skeleton
+  overlays.css    cart drawer, shipping meter, command palette
+  home.css        hero, campaign, selection
+  collection.css  collection page, assistant page
+  components.css  SKU selector (Phase 4)
+  checkout-stepper.css  checkout stepper (Phase 4)
 ```
 
 Layer order: `reset, tokens, foundation, legacy, ui, surfaces`, then unlayered Tailwind utilities.

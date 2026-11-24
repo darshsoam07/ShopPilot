@@ -73,7 +73,7 @@ Rules:
 - Primary buttons are ink on paper. Accent is not a button color.
 - One accent, oxide: `--accent` (#B33D1D). Only for: active nav state, focus ring,
   links, small status marks. Never a fill for large areas. Never body text.
-- One dark band per page at most (`.band`). It flips the tokens inside it, so
+- One dark band per page at most (`.band`); adjacent sections may share it (home hero + campaign). It flips the tokens inside it, so
   components inside never need dark-mode variants.
 - Lines: `--line` for decoration, `--line-control` for control boundaries (3:1).
 - Muted text: `--ink-muted` (6.0:1 on paper). Never lighter.
@@ -157,6 +157,12 @@ These class names and roles are read by `apps/web/tests/*`. Rename them only tog
 `.cart-item`, `.cart-item-image`, `.cart-line-total`, `.detail-layout`, and the accessible names
 "Add to cart", "Place order", "Review order", "Save address", "Continue to checkout",
 "Delivery address", "Payment method", "Demo gateway result", "Quantity", "Qty".
+
+## Shared building blocks
+
+- Adding to cart: `useAddToCart(productId)`. Never re-implement the mutation.
+- Product tiles: `ProductCard` inside `ProductGrid` (or `ProductGridSkeleton`). Compact rows: `AssistantProductRow`.
+- The header wordmark is Instrument Sans, not the display face.
 
 ## Code shape
 
