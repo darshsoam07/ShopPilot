@@ -125,7 +125,12 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .page-heading .eyebrow, .auth-panel label, .checkout-panel label {
   color: var(--color-muted);
 }
-.site-footer { padding-bottom: 76px; background: var(--color-ink); color: var(--ink-inverse); }
+.site-footer {
+  padding-block: var(--space-8);
+  padding-inline: max(var(--gutter), calc(50% - var(--container-max) / 2 + var(--gutter)));
+  background: var(--color-ink);
+  color: var(--ink-inverse);
+}
 @media (hover: hover) {
   .primary-button:hover { background: var(--color-ink);  }
 }
@@ -154,6 +159,20 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .primary-button { transition: background-color 160ms, color 160ms; }
 
 .customer-order-history .order-card { min-width: 0; overflow-wrap: anywhere; }
+.address-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.address-card-actions strong { font-size: var(--text-sm); font-weight: 500; }
+.address-card-actions button {
+  min-height: var(--control);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-sm);
+  background: var(--paper-sunk);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+.page-section > .order-card { margin-bottom: var(--space-4); }
 
 .order-after-sales form,
 .order-after-sales label {

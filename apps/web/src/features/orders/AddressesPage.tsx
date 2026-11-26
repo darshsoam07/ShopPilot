@@ -31,9 +31,11 @@ export function AddressesPage() {
     {list.isPending && <p>Loading addresses…</p>}{list.isError && <p role="alert">{list.error.message}</p>}
     {list.data?.length === 0 && <p>No saved addresses.</p>}
     {list.data?.map(a => <article className="order-card" key={a.id}><address>{Object.values(a.details).filter(Boolean).join(', ')}</address>
-      {a.is_default ? <strong>Default address</strong> : <button disabled={change.isPending} onClick={() => change.mutate(() => patchJson(addressUrl+'/'+a.id,{is_default:true}))}>Set default</button>}
-      <button onClick={() => {setEditing(a.id);setDetails(a.details);setPrimary(a.is_default);}}>Edit</button>
-      <button disabled={change.isPending} onClick={() => {if(window.confirm('Delete this address?')) change.mutate(() => deleteJson(addressUrl+'/'+a.id));}}>Delete</button>
+      <div className="address-card-actions">
+        {a.is_default ? <strong>Default address</strong> : <button disabled={change.isPending} onClick={() => change.mutate(() => patchJson(addressUrl+'/'+a.id,{is_default:true}))}>Set default</button>}
+        <button onClick={() => {setEditing(a.id);setDetails(a.details);setPrimary(a.is_default);}}>Edit</button>
+        <button disabled={change.isPending} onClick={() => {if(window.confirm('Delete this address?')) change.mutate(() => deleteJson(addressUrl+'/'+a.id));}}>Delete</button>
+      </div>
     </article>)}
     <form className="checkout-panel" onSubmit={e=>{e.preventDefault();save();}}><h2>{editing ? 'Edit address' : 'Add address'}</h2>
       {(Object.keys(labels) as Field[]).map(key => <label key={key}>{labels[key]}<input required={!['state','address_line2'].includes(key)} value={details[key] ?? ''} onChange={e=>setDetails({...details,[key]:e.target.value})}/></label>)}

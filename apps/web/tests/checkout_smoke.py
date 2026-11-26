@@ -101,7 +101,7 @@ if __name__ == "__main__":
             try: socket.create_connection(("127.0.0.1", port), timeout=1).close(); break
             except OSError: time.sleep(0.1)
         with sync_playwright() as p:
-            b = p.chromium.launch(channel="chrome")
+            b = p.chromium.launch(channel=os.getenv("PW_CHANNEL", "chrome") or None)
             for w, h, tag in [(1440, 900, "desktop"), (390, 844, "mobile"), (360, 800, "small")]: run(b, origin, w, h, tag)
             b.close()
     finally:
