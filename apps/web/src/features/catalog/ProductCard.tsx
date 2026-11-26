@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getJson } from '../../services/http';
 import { useAddToCart } from '../cart/useAddToCart';
 import { ProductImage, resolveImageSrc } from './ProductImage';
+import { dedupeById } from './dedupe';
 import { resolveProductMedia } from './productMedia';
 import type { Product } from './types';
 
@@ -31,7 +32,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
   const target = '/products/' + product.id;
   const media = resolveProductMedia(product);
   const secondary = media.gallery[1];
-  const variants = family.data && family.data.length > 1 ? family.data : [];
+  const variants = family.data && family.data.length > 1 ? dedupeById(family.data) : [];
 
   return (
     <article className="product-card" data-sold-out={inStock ? undefined : 'true'}>

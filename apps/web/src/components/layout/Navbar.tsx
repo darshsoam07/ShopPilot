@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, matchPath, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCartDrawer } from '../../features/cart/CartDrawerContext';
 import { getCart } from '../../features/cart/api';
@@ -54,7 +55,7 @@ export function Navbar({ open }: { open: () => void }) {
   const onProductPage = !!matchPath('/products/:productId', location.pathname);
 
   return (
-    <header className="site-header" data-compact={compact}>
+    <header className="site-header" data-compact={compact} data-admin={user?.role === 'admin' || undefined}>
       <div className="site-header__bar">
         <div className="container-editorial site-header__row">
           <Link to="/" className="brand"><span className="brand-mark" aria-hidden="true" />ShopPilot</Link>
@@ -73,8 +74,6 @@ export function Navbar({ open }: { open: () => void }) {
               <form role="search" className="store-search" action="/products" method="get">
                 <input type="search" name="q" aria-label="Search the collection" placeholder="Search products" maxLength={100} />
               </form>
-              <button type="button" className={'header-ask' + (onProductPage ? '' : ' copilot-trigger')} aria-keyshortcuts="Control+K Meta+K"
-                onClick={() => { setExpanded(false); open(); }} title="Ctrl or Cmd + K">Ask ShopPilot</button>
               {isAuthenticated ? <>
                 <span className="header-user">{user?.full_name.split(' ')[0]}</span>
                 <button type="button" className="header-text-button" onClick={handleLogout}>Sign out</button>
@@ -84,6 +83,11 @@ export function Navbar({ open }: { open: () => void }) {
               </>}
             </div>
           </div>
+
+          <button type="button" className={'header-ask' + (onProductPage ? '' : ' copilot-trigger')} aria-label="Ask ShopPilot" aria-keyshortcuts="Control+K Meta+K"
+            onClick={() => { setExpanded(false); open(); }} title="Ctrl or Cmd + K">
+            <Search size={16} aria-hidden="true" /><span className="header-ask__label">Ask ShopPilot</span>
+          </button>
 
           {isAuthenticated && (
             <button type="button" className="cart-link" aria-haspopup="dialog" aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`} onClick={openDrawer}>

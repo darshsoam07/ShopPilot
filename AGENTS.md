@@ -154,7 +154,8 @@ and `AssistantPage` (`/assistant`, the long form). There is no assistant drawer.
 These class names and roles are read by `apps/web/tests/*`. Rename them only together with the tests:
 `.copilot-trigger`, `.product-card`, `.product-image-wrap`, `.gallery-stage`, `.gallery-thumbs button`,
 `.sku-options` (and its links), `.pdp-purchase`, `.purchase-strip`, `.campaign`, `.campaign-art`,
-`.cart-item`, `.cart-item-image`, `.cart-line-total`, `.detail-layout`, and the accessible names
+`.cart-item`, `.cart-item-image`, `.cart-line-total`, `.detail-layout`, `.sku-options a`, `.pdp-purchase form button`,
+`.pdp-purchase > small`, `.pdp-purchase > strong`, `.spec-tiles`, and the accessible names
 "Add to cart", "Place order", "Review order", "Save address", "Continue to checkout",
 "Delivery address", "Payment method", "Demo gateway result", "Quantity", "Qty".
 
@@ -163,6 +164,11 @@ These class names and roles are read by `apps/web/tests/*`. Rename them only tog
 - Adding to cart: `useAddToCart(productId)`. Never re-implement the mutation.
 - Product tiles: `ProductCard` inside `ProductGrid` (or `ProductGridSkeleton`). Compact rows: `AssistantProductRow`.
 - The header wordmark is Instrument Sans, not the display face.
+
+## Loading states
+
+Skeletons never reuse a test-hook class name (`.gallery-stage`, `.pdp-purchase`, `.detail-layout`, `.product-image-wrap`).
+A hook that exists during loading detaches mid-action and breaks the browser tests.
 
 ## Code shape
 

@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addCartItem } from './api';
 
-/** Adds one unit to the cart and returns to idle after the confirmation has been seen. */
+/** Adds `quantity` units (default 1) and returns to idle after the confirmation has been seen. */
 export function useAddToCart(productId: number) {
   const client = useQueryClient();
   const mutation = useMutation({
-    mutationFn: () => addCartItem(productId, 1),
+    mutationFn: (quantity: number | void) => addCartItem(productId, quantity || 1),
     onSuccess: cart => client.setQueryData(['cart'], cart),
   });
   const { isSuccess, reset } = mutation;

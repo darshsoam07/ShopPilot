@@ -1,373 +1,161 @@
-import React, { useEffect, useState } from "react";
-import {
-  fetchProductReviews,
-  ProductReviewsBundle,
-  submitProductReview,
-} from "./reviewsApi";
+import { useId, useState, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'motion/react';
+import { Check } from 'lucide-react';
+import { STAGGER, TRANSITION, VIEWPORT_ONCE } from '../../lib/motion';
+import { fetchProductReviews, submitProductReview, type ReviewItem } from './reviewsApi';
 
-interface ProductReviewsSectionProps {
-  productId: number;
+const STARS = [5, 4, 3, 2, 1] as const;
+
+function Stars({ value }: { value: number }) {
+  const rounded = Math.max(0, Math.min(5, Math.round(value)));
+  return (
+    <span className="stars" role="img" aria-label={`Rated ${rounded} out of 5`}>
+      <span aria-hidden="true">{'★'.repeat(rounded)}<span className="stars__empty">{'★'.repeat(5 - rounded)}</span></span>
+    </span>
+  );
 }
 
-export const ProductReviewsSection: React.FC<ProductReviewsSectionProps> = ({
-  productId,
-}) => {
-  const [bundle, setBundle] = useState<ProductReviewsBundle | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [showForm, setShowForm] = useState<boolean>(false);
+/** Counts of the loaded reviews by star rating. Only real reviews are counted. */
+function distribution(reviews: ReviewItem[]) {
+  return STARS.map(stars => ({ stars, count: reviews.filter(review => Math.round(review.rating) === stars).length }));
+}
 
-  const [rating, setRating] = useState<number>(5);
-  const [title, setTitle] = useState<string>("");
-  const [comment, setComment] = useState<string>("");
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [formError, setFormError] = useState<string | null>(null);
+export function ProductReviewsSection({ productId }: { productId: number }) {
+  const client = useQueryClient();
+  const ids = { rating: useId(), title: useId(), comment: useId() };
+  const [showForm, setShowForm] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState('');
+  const [comment, setComment] = useState('');
 
-  const loadReviews = () => {
-    setLoading(true);
-    fetchProductReviews(productId)
-      .then(setBundle)
-      .catch((err: Error) => setFormError(err.message))
-      .finally(() => setLoading(false));
-  };
+  const reviews = useQuery({ queryKey: ['reviews', productId], queryFn: () => fetchProductReviews(productId) });
+  const publish = useMutation({
+    mutationFn: () => submitProductReview(productId, { rating, title, comment }),
+    onSuccess: async () => {
+      setTitle(''); setComment(''); setShowForm(false);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['reviews', productId] }),
+        client.invalidateQueries({ queryKey: ['product', String(productId)] }),
+      ]);
+    },
+  });
 
-  useEffect(() => {
-    loadReviews();
-  }, [productId]);
+  const submit = (event: FormEvent) => { event.preventDefault(); publish.mutate(); };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    setSubmitting(true);
-
-    try {
-      await submitProductReview(productId, { rating, title, comment });
-      setTitle("");
-      setComment("");
-      setShowForm(false);
-      loadReviews();
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message :
-          "Unable to submit review. Verified purchase required."
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (!loading && !bundle && formError) return <p role="alert">{formError}</p>;
-  if (loading || !bundle) {
+  if (reviews.isPending) {
     return (
-      <section style={{ marginTop: "48px" }}>
-        <p style={{ color: "var(--text-secondary, #6E6D68)", fontSize: "14px" }}>
-          Loading verified buyer reviews...
-        </p>
+      <section className="reviews" aria-labelledby="reviews-title">
+        <h2 id="reviews-title">Customer reviews</h2>
+        <div role="status" aria-label="Loading reviews" className="reviews__loading">
+          <div className="skeleton reviews__skeleton-summary" />
+          <div className="skeleton reviews__skeleton-card" /><div className="skeleton reviews__skeleton-card" />
+        </div>
       </section>
     );
   }
 
-  const { digest, reviews, can_review } = bundle;
+  if (reviews.isError) {
+    return (
+      <section className="reviews" aria-labelledby="reviews-title">
+        <h2 id="reviews-title">Customer reviews</h2>
+        <div className="state-panel error-state" role="alert">
+          <strong>Couldn’t load reviews.</strong>
+          <span>{reviews.error.message}</span>
+          <button type="button" onClick={() => reviews.refetch()}>Retry</button>
+        </div>
+      </section>
+    );
+  }
+
+  const { digest, reviews: items, can_review } = reviews.data;
+  const bars = distribution(items);
+  const peak = Math.max(1, ...bars.map(bar => bar.count));
 
   return (
-    <section style={{ marginTop: "56px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "12px",
-          marginBottom: "20px",
-        }}
-      >
-        <h2 style={{ fontSize: "22px", margin: 0 }}>
-          Verified Customer Reviews ({digest.total_reviews})
-        </h2>
-
+    <section className="reviews" aria-labelledby="reviews-title">
+      <header className="reviews__head">
+        <h2 id="reviews-title">Customer reviews <span className="tnum reviews__total">({digest.total_reviews})</span></h2>
         {can_review ? (
-          <button
-            type="button"
-            onClick={() => setShowForm((prev) => !prev)}
-            style={{
-              padding: "9px 18px",
-              borderRadius: "999px",
-              border: "none",
-              backgroundColor: "var(--cta-bg, #141413)",
-              color: "var(--cta-text, #F9F8F6)",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {showForm ? "Cancel" : "✎ Write a Verified Review"}
+          <button type="button" className="btn-ghost" aria-expanded={showForm} onClick={() => setShowForm(open => !open)}>
+            {showForm ? 'Cancel' : 'Write a review'}
           </button>
         ) : (
-          <span
-            style={{
-              fontSize: "12px",
-              padding: "6px 12px",
-              borderRadius: "999px",
-              backgroundColor: "var(--bg-ai-panel, #F2F0EC)",
-              color: "var(--text-secondary, #6E6D68)",
-              border: "1px solid var(--border-hairline, #E5E3DD)",
-            }}
-          >
-            ✓ Reviews restricted to verified SKU purchasers
-          </span>
+          <p className="reviews__note">Only customers who bought this product can review it.</p>
         )}
-      </div>
+      </header>
 
-      {/* AI Sentiment Digest Card */}
-      <div
-        style={{
-          padding: "22px 24px",
-          borderRadius: "16px",
-          backgroundColor: "var(--bg-ai-panel, #F2F0EC)",
-          border: "1px solid var(--border-hairline, #E5E3DD)",
-          marginBottom: "24px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "12px",
-            marginBottom: "10px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ color: "var(--accent-ai, #E85D34)", fontWeight: 700 }}>
-              ✦ AI Sentiment Digest
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                padding: "3px 10px",
-                borderRadius: "999px",
-                backgroundColor: "var(--bg-elevated, #FFFFFF)",
-                border: "1px solid var(--border-hairline, #E5E3DD)",
-              }}
-            >
-              {digest.sentiment_label}
-            </span>
+      <div className="reviews__summary">
+        {digest.total_reviews > 0 && (
+          <div className="reviews__score">
+            <p className="reviews__average tnum">{digest.average_rating.toFixed(1)}<span> / 5</span></p>
+            <Stars value={digest.average_rating} />
+            <p className="reviews__verified tnum">{digest.verified_count} verified {digest.verified_count === 1 ? 'purchase' : 'purchases'}</p>
           </div>
-
-          {digest.total_reviews > 0 && (
-            <div style={{ fontSize: "15px", fontWeight: 700 }}>
-              <span style={{ color: "#F59E0B" }}>★ {digest.average_rating.toFixed(1)}</span>{" "}
-              <span style={{ fontSize: "12px", fontWeight: 400, color: "var(--text-secondary)" }}>
-                ({digest.verified_count} verified purchases)
-              </span>
+        )}
+        <div className="reviews__digest">
+          {digest.sentiment_label && <p className="reviews__label">{digest.sentiment_label}</p>}
+          {digest.summary && <p>{digest.summary}</p>}
+          {(digest.pros.length > 0 || digest.cons.length > 0) && (
+            <div className="reviews__themes">
+              {digest.pros.length > 0 && <div><h3>What customers like</h3><ul>{digest.pros.map((pro, i) => <li key={`${i}:${pro}`}>{pro}</li>)}</ul></div>}
+              {digest.cons.length > 0 && <div><h3>Worth knowing</h3><ul>{digest.cons.map((con, i) => <li key={`${i}:${con}`}>{con}</li>)}</ul></div>}
             </div>
           )}
         </div>
-
-        <p
-          style={{
-            margin: "0 0 14px 0",
-            fontSize: "14px",
-            lineHeight: 1.6,
-            color: "var(--text-primary, #141413)",
-          }}
-        >
-          {digest.summary}
-        </p>
-
-        {/* Pros & Cons Theme Chips */}
-        {(digest.pros.length > 0 || digest.cons.length > 0) && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {digest.pros.map((pro) => (
-              <span
-                key={pro}
-                style={{
-                  fontSize: "12px",
-                  padding: "4px 12px",
-                  borderRadius: "999px",
-                  backgroundColor: "var(--bg-elevated, #FFFFFF)",
-                  border: "1px solid var(--border-hairline, #E5E3DD)",
-                  color: "#15803D",
-                  fontWeight: 500,
-                }}
-              >
-                + {pro}
-              </span>
+        {items.length > 0 && (
+          <ul className="reviews__bars" aria-label="Rating breakdown">
+            {bars.map(({ stars, count }, index) => (
+              <li key={stars}>
+                <span className="tnum">{stars} star{stars > 1 ? 's' : ''}</span>
+                <span className="reviews__track" aria-hidden="true">
+                  <motion.span className="reviews__fill" initial={{ scaleX: 0 }} whileInView={{ scaleX: count / peak }} viewport={VIEWPORT_ONCE}
+                    transition={{ ...TRANSITION.reveal, delay: index * STAGGER }} />
+                </span>
+                <span className="tnum reviews__count">{count}</span>
+              </li>
             ))}
-            {digest.cons.map((con) => (
-              <span
-                key={con}
-                style={{
-                  fontSize: "12px",
-                  padding: "4px 12px",
-                  borderRadius: "999px",
-                  backgroundColor: "var(--bg-elevated, #FFFFFF)",
-                  border: "1px solid var(--border-hairline, #E5E3DD)",
-                  color: "var(--text-secondary, #6E6D68)",
-                }}
-              >
-                • Note: {con}
-              </span>
-            ))}
-          </div>
+          </ul>
         )}
       </div>
 
-      {/* Verified Review Submission Form */}
       {showForm && can_review && (
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            padding: "22px",
-            borderRadius: "14px",
-            backgroundColor: "var(--bg-elevated, #FFFFFF)",
-            border: "1px solid var(--border-hairline, #E5E3DD)",
-            marginBottom: "24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "14px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <label style={{ fontSize: "13px", fontWeight: 600 }}>Rating:</label>
-            <select
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "8px",
-                border: "1px solid var(--border-hairline, #E5E3DD)",
-              }}
-            >
-              {[5, 4, 3, 2, 1].map((val) => (
-                <option key={val} value={val}>
-                  {val} Star{val > 1 ? "s" : ""}
-                </option>
-              ))}
+        <form className="reviews__form" onSubmit={submit}>
+          <label htmlFor={ids.rating}>Rating
+            <select id={ids.rating} value={rating} onChange={event => setRating(Number(event.target.value))}>
+              {STARS.map(value => <option key={value} value={value}>{value} star{value > 1 ? 's' : ''}</option>)}
             </select>
-          </div>
-
-          <input
-            required
-            minLength={3}
-            maxLength={120}
-            placeholder="Review headline (e.g., Exceptional ANC and battery life)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid var(--border-hairline, #E5E3DD)",
-              fontSize: "14px",
-            }}
-          />
-
-          <textarea
-            required
-            minLength={10}
-            maxLength={2000}
-            rows={3}
-            placeholder="Share how this configuration performs in daily use..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid var(--border-hairline, #E5E3DD)",
-              fontSize: "14px",
-              fontFamily: "inherit",
-            }}
-          />
-
-          {formError && (
-            <div style={{ fontSize: "12px", color: "#B91C1C" }}>{formError}</div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              alignSelf: "flex-start",
-              padding: "10px 20px",
-              borderRadius: "8px",
-              border: "none",
-              backgroundColor: "var(--cta-bg, #141413)",
-              color: "var(--cta-text, #F9F8F6)",
-              fontWeight: 600,
-              cursor: submitting ? "wait" : "pointer",
-            }}
-          >
-            {submitting ? "Publishing..." : "Publish Verified Review"}
-          </button>
+          </label>
+          <label htmlFor={ids.title}>Headline
+            <input id={ids.title} required minLength={3} maxLength={120} value={title} onChange={event => setTitle(event.target.value)} />
+          </label>
+          <label htmlFor={ids.comment}>Your review
+            <textarea id={ids.comment} required minLength={10} maxLength={2000} rows={4} value={comment} onChange={event => setComment(event.target.value)} />
+          </label>
+          {publish.isError && <p className="form-error" role="alert">{publish.error.message}</p>}
+          <button type="submit" className="btn-primary" disabled={publish.isPending}>{publish.isPending ? 'Publishing…' : 'Publish review'}</button>
         </form>
       )}
 
-      {/* Individual Reviews List */}
-      {reviews.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {reviews.map((rev) => (
-            <article
-              key={rev.id}
-              style={{
-                padding: "18px 20px",
-                borderRadius: "12px",
-                backgroundColor: "var(--bg-elevated, #FFFFFF)",
-                border: "1px solid var(--border-hairline, #E5E3DD)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "6px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ color: "#F59E0B", fontWeight: 700, fontSize: "13px" }}>
-                    {"★".repeat(rev.rating)}
-                    {"☆".repeat(5 - rev.rating)}
-                  </span>
-                  <strong style={{ fontSize: "14px" }}>{rev.title}</strong>
-                </div>
-
-                {rev.is_verified_purchase && (
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      color: "#15803D",
-                      backgroundColor: "var(--bg-canvas, #F9F8F6)",
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border-hairline, #E5E3DD)",
-                    }}
-                  >
-                    ✓ Verified Purchase
-                  </span>
-                )}
+      {items.length === 0 ? (
+        <p className="reviews__empty">
+          No reviews yet.{can_review ? ' Be the first to share how it performs.' : ' Reviews open once customers have bought it.'}
+        </p>
+      ) : (
+        <ul className="reviews__list">
+          {items.map(review => (
+            <li key={review.id} className="review-card">
+              <div className="review-card__top">
+                <Stars value={review.rating} />
+                {review.is_verified_purchase && <span className="review-card__verified"><Check size={13} aria-hidden="true" /> Verified purchase</span>}
               </div>
-
-              <p
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: "13px",
-                  lineHeight: 1.55,
-                  color: "var(--text-primary, #141413)",
-                }}
-              >
-                {rev.comment}
-              </p>
-
-              <div style={{ fontSize: "11px", color: "var(--text-secondary, #6E6D68)" }}>
-                By {rev.author_name} •{" "}
-                {new Date(rev.created_at).toLocaleDateString()}
-              </div>
-            </article>
+              <h3>{review.title}</h3>
+              <p>{review.comment}</p>
+              <p className="review-card__by">{review.author_name} · <time dateTime={review.created_at}>{new Date(review.created_at).toLocaleDateString('en-IN')}</time></p>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );
-};
+}

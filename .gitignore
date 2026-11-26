@@ -37,4 +37,6 @@ docs/design/
 shoppilot-frontend.txt
 phase4-claude-prompt.md
 shoppilot-phase4.zip
+*.zip
+.tmp-phase4/
 

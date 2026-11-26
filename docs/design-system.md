@@ -115,8 +115,8 @@ styles/
   overlays.css    cart drawer, shipping meter, command palette
   home.css        hero, campaign, selection
   collection.css  collection page, assistant page
-  components.css  SKU selector (Phase 4)
-  checkout-stepper.css  checkout stepper (Phase 4)
+  pdp.css         product detail, SKU options, specs, reviews
+  checkout.css    stepper, form flow, choice cards, order summary
 ```
 
 Layer order: `reset, tokens, foundation, legacy, ui, surfaces`, then unlayered Tailwind utilities.

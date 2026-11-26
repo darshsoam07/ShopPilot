@@ -7,6 +7,7 @@ import { sendAssistantMessage } from '../../features/assistant/api';
 import { AssistantProductRow } from '../../features/assistant/AssistantProductRow';
 import type { ChatMessage } from '../../features/assistant/types';
 import { getProducts } from '../../features/catalog/api';
+import { dedupeById } from '../../features/catalog/dedupe';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getJson } from '../../services/http';
 
@@ -51,7 +52,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     queryFn: () => getProducts('limit=4&offset=0&q=' + encodeURIComponent(term)),
     placeholderData: keepPreviousData,
   });
-  const liveItems = term.length >= 2 ? live.data?.items ?? [] : [];
+  const liveItems = term.length >= 2 ? dedupeById(live.data?.items ?? []) : [];
 
   const mutation = useMutation({
     mutationFn: (prompt: string) => sendAssistantMessage({
@@ -177,7 +178,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                       {message.action.summary}
                     </p>
                   )}
-                  {message.recommended_products?.map(product => <AssistantProductRow key={product.id} product={product} onNavigate={onClose} />)}
+                  {dedupeById(message.recommended_products ?? []).map(product => <AssistantProductRow key={product.id} product={product} onNavigate={onClose} />)}
                 </li>
               ))}
             </ul>

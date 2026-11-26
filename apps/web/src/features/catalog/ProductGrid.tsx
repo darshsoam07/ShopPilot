@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { STAGGER, TRANSITION } from '../../lib/motion';
+import { dedupeById } from './dedupe';
 import { ProductCard } from './ProductCard';
 import type { Product } from './types';
 
@@ -18,7 +19,7 @@ interface ProductGridProps {
 export function ProductGrid({ products, view = 'grid', wide = false, stale = false, prioritizeFirst = false }: ProductGridProps) {
   return (
     <div className="product-grid" data-view={view} data-wide={wide || undefined} data-stale={stale || undefined}>
-      {products.map((product, index) => (
+      {dedupeById(products).map((product, index) => (
         <motion.div key={product.id} className="product-grid__cell"
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ ...TRANSITION.enter, delay: Math.min(index, 7) * STAGGER }}>
