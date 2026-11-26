@@ -1,21 +1,54 @@
-import { CheckoutStepper } from './CheckoutStepper';
-import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { addressUrl, useAddresses, type Address } from './AddressesPage';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
+import { ArrowLeft } from 'lucide-react';
+import { TRANSITION } from '../../lib/motion';
 import { ApiError, postJson } from '../../services/http';
 import { getCart } from '../cart/api';
+import { addressUrl, useAddresses, type Address } from './AddressesPage';
 import { submitCheckoutOrder, validateCouponCode } from './api';
+import { CheckoutStepper } from './CheckoutStepper';
 import type { CheckoutPayload } from './types';
+
+const FEES = { DHL: 15.99, FedEx: 9.99, GLS: 7.99 } as const;
+type Carrier = keyof typeof FEES;
+
+const PAYMENT_NOTES: Record<CheckoutPayload['payment_method'], string> = {
+  card: 'Card payments are simulated. No card details are collected.',
+  upi: 'UPI payments are simulated. No UPI details are collected.',
+  cod: 'Pay the courier when the order arrives. Nothing is charged now.',
+};
+
+function Field({ label, children }: { label: string; children: (id: string) => ReactNode }) {
+  const id = useId();
+  return <div className="field"><label htmlFor={id}>{label}</label>{children(id)}</div>;
+}
+
+/** One step of the flow. Fades in; focus moves to its heading once the person has navigated. */
+function StepPanel({ heading, focus, children }: { heading: string; focus: boolean; children: ReactNode }) {
+  const title = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (focus) title.current?.focus({ preventScroll: true }); }, [focus]);
+  return (
+    <motion.div className="checkout-step-panel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+      transition={TRANSITION.ui}>
+      <h2 tabIndex={-1} ref={title}>{heading}</h2>
+      {children}
+    </motion.div>
+  );
+}
+
+const rupees = (value: number | string) => '₹' + Number(value).toFixed(2);
 
 export function CheckoutPage() {
   const cart = useQuery({ queryKey: ['cart'], queryFn: getCart });
   const client = useQueryClient();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const navigated = useRef(false);
+  const goTo = (next: 1 | 2 | 3) => { navigated.current = true; setStep(next); };
   const [shipping, setShipping] = useState({ full_name: '', address: '', city: '', postal_code: '' });
-  const fees = { DHL: 15.99, FedEx: 9.99, GLS: 7.99 };
-  const [carrier, setCarrier] = useState<keyof typeof fees>('FedEx');
+  const [carrier, setCarrier] = useState<Carrier>('FedEx');
   const [decline, setDecline] = useState(false);
   const [sameBilling, setSameBilling] = useState(true);
   const [billing, setBilling] = useState('');
@@ -29,69 +62,184 @@ export function CheckoutPage() {
   const [choice, setChoice] = useState<string>();
   const selectedId = choice ?? String(addresses.data?.find(a => a.is_default)?.id ?? '');
   const selected = addresses.data?.find(a => String(a.id) === selectedId);
-  const [saveAddress,setSaveAddress] = useState(false);
+  const [saveAddress, setSaveAddress] = useState(false);
   const save = useMutation({
-    mutationFn: () => postJson<Address>(addressUrl,{details:{recipient_name:shipping.full_name,address_line1:shipping.address,
-      city:shipping.city,postal_code:shipping.postal_code,country,phone}}),
+    mutationFn: () => postJson<Address>(addressUrl, { details: { recipient_name: shipping.full_name, address_line1: shipping.address,
+      city: shipping.city, postal_code: shipping.postal_code, country, phone } }),
     onSuccess: async address => {
-      await client.invalidateQueries({queryKey:['addresses']});
-      setChoice(String(address.id)); setSaveAddress(false); setStep(2);
-    }
+      await client.invalidateQueries({ queryKey: ['addresses'] });
+      setChoice(String(address.id)); setSaveAddress(false); goTo(2);
+    },
   });
-  const attempt = useRef<{signature:string; key:string} | null>(null);
+  const attempt = useRef<{ signature: string; key: string } | null>(null);
   const place = useMutation({
     mutationFn: () => {
-      const payload = { ...(selected ? {address_id:selected.id,billing_address:sameBilling ? undefined : billing} : {shipping:{...shipping,country,phone,billing_address:sameBilling ? undefined : billing}}),
-        carrier, simulate_failure:payment !== 'cod' && decline, payment_method:payment, coupon_code:applied?.valid ? applied.code : undefined };
+      const payload = { ...(selected ? { address_id: selected.id, billing_address: sameBilling ? undefined : billing }
+        : { shipping: { ...shipping, country, phone, billing_address: sameBilling ? undefined : billing } }),
+        carrier, simulate_failure: payment !== 'cod' && decline, payment_method: payment, coupon_code: applied?.valid ? applied.code : undefined };
       const signature = JSON.stringify(payload);
-      if (attempt.current?.signature !== signature) attempt.current = {signature,key:crypto.randomUUID()};
-      return submitCheckoutOrder({...payload,idempotency_key:attempt.current.key});
+      if (attempt.current?.signature !== signature) attempt.current = { signature, key: crypto.randomUUID() };
+      return submitCheckoutOrder({ ...payload, idempotency_key: attempt.current.key });
     },
     onError: error => { if (error instanceof ApiError && error.status === 402) attempt.current = null; },
     onSuccess: order => {
       void client.invalidateQueries({ queryKey: ['cart'] });
       void client.invalidateQueries({ queryKey: ['orders'] });
       navigate('/orders?placed=' + order.id);
-    }
+    },
   });
-  if (!cart.data) return <p className="state-panel">{cart.error?.message ?? 'Loading cart…'}</p>;
-  if (!cart.data.items.length) return <p className="state-panel">Your cart is empty. <Link to="/">Browse products</Link></p>;
-  const total = (Number(applied?.final_total ?? cart.data.subtotal) + fees[carrier]).toFixed(2);
-  return <section className="page-section checkout-reference"><h1>Checkout</h1>
-    <CheckoutStepper currentStep={step} onStepSelect={place.isPending ? undefined : setStep} />
-    <div className="checkout-columns"><div className="checkout-panel">
-    {step === 1 && <form onSubmit={e => { e.preventDefault(); if(!selected && saveAddress) save.mutate(); else setStep(2); }}><h2>Delivery details</h2>
-      <label>Delivery address<select value={selectedId} onChange={e=>setChoice(e.target.value)}><option value="">Enter a new address</option>
-        {addresses.data?.map(a=><option key={a.id} value={a.id}>{a.details.recipient_name} · {a.details.address_line1}{a.is_default ? ' (default)' : ''}</option>)}</select></label>
-      {selected ? <address>{Object.values(selected.details).filter(Boolean).join(', ')}</address> : <>
-      {(['full_name','address','city','postal_code'] as const).map((key,i) => <label key={key}>{['Recipient name','Street address','City','Postal code'][i]}
-        <input required minLength={[2,5,2,3][i]} maxLength={[120,255,100,32][i]} value={shipping[key]} onChange={e => setShipping({ ...shipping, [key]: e.target.value })} /></label>)}
-      <label>Country<input required value={country} onChange={e => setCountry(e.target.value)} /></label>
-      <label>Phone number<input type="tel" minLength={7} maxLength={20} required value={phone} onChange={e => setPhone(e.target.value)} /></label>
-      <label><input type="checkbox" checked={saveAddress} onChange={e=>setSaveAddress(e.target.checked)}/>Save this delivery address</label></>}
-      <label><input type="checkbox" checked={sameBilling} onChange={e => setSameBilling(e.target.checked)} /> Use delivery address for billing</label>
-      {!sameBilling && <label>Billing address<input required maxLength={255} value={billing} onChange={e => setBilling(e.target.value)} /></label>}
 
-      {save.isError && <p role="alert">{save.error.message}</p>}
-      <fieldset className="carrier-options"><legend>Delivery method</legend>{(Object.keys(fees) as Array<keyof typeof fees>).map(name =>
-        <label key={name}><input type="radio" name="carrier" checked={carrier === name} onChange={() => setCarrier(name)} />{name} · ₹{fees[name]}</label>)}</fieldset>
-      <button disabled={save.isPending || addresses.isPending} className="primary-button">Continue to payment</button></form>}
-    {step === 2 && <><h2>Demo payment</h2><p>Payments are simulated. No money or payment credentials are collected.</p>
-      <label>Payment method<select value={payment} onChange={e => setPayment(e.target.value as CheckoutPayload['payment_method'])}><option value="card">Card</option><option value="upi">UPI</option><option value="cod">Cash on delivery</option></select></label>
-      {payment !== 'cod' && <label>Demo gateway result<select value={decline ? 'decline' : 'success'} onChange={e => setDecline(e.target.value === 'decline')}><option value="success">Approve payment</option><option value="decline">Decline payment</option></select></label>}
-      <label>Promo code<input maxLength={32} placeholder="SHOPPILOT10 or AI20" value={code} onChange={e => setCode(e.target.value)} /></label>
-      <button disabled={!code.trim() || quote.isPending} onClick={() => quote.mutate({ code, subtotal: cart.data.subtotal })}>Apply code</button>
-      <p role="status">{applied?.message ?? quote.error?.message}</p>
-      <button onClick={() => setStep(1)}>Back</button> <button disabled={!!code && !applied?.valid} onClick={() => setStep(3)}>Review order</button></>}
-    {step === 3 && <><h2>Review order</h2><p>{Object.values(selected?.details ?? shipping).filter(Boolean).join(', ')}</p><p>{payment.toUpperCase()} · Simulated payment</p>
-      {cart.data.items.map(item => <p key={item.id}>{item.product.name} × {item.quantity}</p>)}
-      <p>Subtotal ₹{cart.data.subtotal} · Discount ₹{applied?.discount_amount ?? '0.00'}</p>
-      <button disabled={place.isPending} onClick={() => setStep(2)}>Back</button> <button className="primary-button" disabled={place.isPending || (!!code && !applied?.valid)} onClick={() => place.mutate()}>Place order · ₹{total}</button>
-      {place.error && <p role="alert">{place.error.message}</p>}</>}
-  </div><aside className="checkout-summary"><h2>Order summary</h2><table><thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead><tbody>
-    {cart.data.items.map(item => <tr key={item.id}><td>{item.product.name}<small style={{display: 'block'}}>{item.product.sku} · {[item.product.specifications?.Finish, item.product.specifications?.Configuration, item.product.specifications?.Protection].filter(Boolean).join(' · ')}</small></td><td>{item.quantity}</td><td>₹{(Number(item.product.price)*item.quantity).toFixed(2)}</td></tr>)}</tbody></table>
-    <p>Subtotal <strong>₹{cart.data.subtotal}</strong></p><p>Shipping · {carrier} <strong>₹{fees[carrier]}</strong></p>
-    {applied?.valid && <p>Discount <strong>−₹{applied.discount_amount}</strong></p>}<p>Total <strong>₹{total}</strong></p>
-    <Link to="/cart">Edit cart</Link></aside></div></section>;
+  if (cart.isPending) {
+    return (
+      <section className="page-section checkout-reference" role="status" aria-label="Loading checkout">
+        <div className="skeleton checkout-skeleton-title" />
+        <div className="checkout-columns" aria-hidden="true"><div className="skeleton checkout-skeleton-panel" /><div className="skeleton checkout-skeleton-panel" /></div>
+      </section>
+    );
+  }
+  if (!cart.data) {
+    return (
+      <section className="state-panel error-state" role="alert">
+        <strong>Couldn’t load your cart.</strong>
+        <span>{cart.error?.message}</span>
+        <button type="button" onClick={() => cart.refetch()}>Retry</button>
+      </section>
+    );
+  }
+  if (!cart.data.items.length) return <p className="state-panel">Your cart is empty. <Link to="/products">Browse products</Link></p>;
+
+  const estimatedTotal = (Number(applied?.final_total ?? cart.data.subtotal) + FEES[carrier]).toFixed(2);
+  const couponBlocks = !!code && !applied?.valid;
+
+  return (
+    <section className="page-section checkout-reference">
+      <h1>Checkout</h1>
+      <CheckoutStepper currentStep={step} onStepSelect={place.isPending ? undefined : goTo} />
+      <div className="checkout-columns">
+        <div className="checkout-flow">
+          <AnimatePresence mode="wait" initial={false}>
+            {step === 1 && (
+              <StepPanel key="shipping" heading="Delivery details" focus={navigated.current}>
+                <form onSubmit={event => { event.preventDefault(); if (!selected && saveAddress) save.mutate(); else goTo(2); }}>
+                  <Field label="Delivery address">{id => (
+                    <select id={id} value={selectedId} onChange={event => setChoice(event.target.value)}>
+                      <option value="">Enter a new address</option>
+                      {addresses.data?.map(a => <option key={a.id} value={a.id}>{a.details.recipient_name} · {a.details.address_line1}{a.is_default ? ' (default)' : ''}</option>)}
+                    </select>
+                  )}</Field>
+                  {addresses.isError && <p className="inline-error" role="alert">Saved addresses couldn’t be loaded. You can enter a new one.</p>}
+                  {selected ? (
+                    <address className="address-card">{Object.values(selected.details).filter(Boolean).join(', ')}</address>
+                  ) : (
+                    <>
+                      {(['full_name', 'address', 'city', 'postal_code'] as const).map((key, i) => (
+                        <Field key={key} label={['Recipient name', 'Street address', 'City', 'Postal code'][i]}>{id => (
+                          <input id={id} required minLength={[2, 5, 2, 3][i]} maxLength={[120, 255, 100, 32][i]} value={shipping[key]}
+                            onChange={event => setShipping({ ...shipping, [key]: event.target.value })} />
+                        )}</Field>
+                      ))}
+                      <Field label="Country">{id => <input id={id} required value={country} onChange={event => setCountry(event.target.value)} />}</Field>
+                      <Field label="Phone number">{id => <input id={id} type="tel" minLength={7} maxLength={20} required value={phone} onChange={event => setPhone(event.target.value)} />}</Field>
+                      <label className="check"><input type="checkbox" checked={saveAddress} onChange={event => setSaveAddress(event.target.checked)} />Save this delivery address</label>
+                    </>
+                  )}
+                  <label className="check"><input type="checkbox" checked={sameBilling} onChange={event => setSameBilling(event.target.checked)} /> Use delivery address for billing</label>
+                  {!sameBilling && <Field label="Billing address">{id => <input id={id} required maxLength={255} value={billing} onChange={event => setBilling(event.target.value)} />}</Field>}
+                  {save.isError && <p role="alert" className="inline-error">{save.error.message}</p>}
+
+                  <fieldset className="carrier-options">
+                    <legend>Delivery method</legend>
+                    {(Object.keys(FEES) as Carrier[]).map(name => (
+                      <label key={name} className="choice-card" data-checked={carrier === name || undefined}>
+                        <input type="radio" name="carrier" checked={carrier === name} onChange={() => setCarrier(name)} />
+                        <span className="choice-card__name">{name}</span>
+                        <span className="choice-card__meta tnum">₹{FEES[name]}</span>
+                      </label>
+                    ))}
+                  </fieldset>
+                  <div className="checkout-actions">
+                    <button disabled={save.isPending || addresses.isPending} className="btn-primary">Continue to payment</button>
+                  </div>
+                </form>
+              </StepPanel>
+            )}
+
+            {step === 2 && (
+              <StepPanel key="payment" heading="Demo payment" focus={navigated.current}>
+                <p className="checkout-lead">Payments are simulated. No money or payment credentials are collected.</p>
+                <Field label="Payment method">{id => (
+                  <select id={id} value={payment} onChange={event => setPayment(event.target.value as CheckoutPayload['payment_method'])}>
+                    <option value="card">Card</option><option value="upi">UPI</option><option value="cod">Cash on delivery</option>
+                  </select>
+                )}</Field>
+                <p className="choice-note">{PAYMENT_NOTES[payment]}</p>
+                {payment !== 'cod' && (
+                  <Field label="Demo gateway result">{id => (
+                    <select id={id} value={decline ? 'decline' : 'success'} onChange={event => setDecline(event.target.value === 'decline')}>
+                      <option value="success">Approve payment</option><option value="decline">Decline payment</option>
+                    </select>
+                  )}</Field>
+                )}
+                <div className="promo">
+                  <Field label="Promo code">{id => <input id={id} maxLength={32} placeholder="SHOPPILOT10 or AI20" value={code} onChange={event => setCode(event.target.value)} />}</Field>
+                  <button type="button" className="btn-ghost" disabled={!code.trim() || quote.isPending}
+                    onClick={() => quote.mutate({ code, subtotal: cart.data.subtotal })}>Apply code</button>
+                </div>
+                <p role="status" className="promo__status">{applied?.message ?? quote.error?.message}</p>
+                <div className="checkout-actions">
+                  <button type="button" className="btn-ghost" onClick={() => goTo(1)}><ArrowLeft size={15} aria-hidden="true" />Back</button>
+                  <button type="button" className="btn-primary" disabled={couponBlocks} onClick={() => goTo(3)}>Review order</button>
+                </div>
+              </StepPanel>
+            )}
+
+            {step === 3 && (
+              <StepPanel key="review" heading="Review order" focus={navigated.current}>
+                <dl className="review-list">
+                  <div><dt>Deliver to</dt><dd>{Object.values(selected?.details ?? shipping).filter(Boolean).join(', ')}</dd></div>
+                  <div><dt>Payment</dt><dd>{payment.toUpperCase()} · Simulated payment</dd></div>
+                  <div><dt>Delivery</dt><dd>{carrier}</dd></div>
+                </dl>
+                <ul className="review-items">
+                  {cart.data.items.map(item => <li key={item.id}>{item.product.name} <span className="tnum">× {item.quantity}</span></li>)}
+                </ul>
+                <p className="review-totals tnum">Subtotal {rupees(cart.data.subtotal)} · Discount {rupees(applied?.discount_amount ?? 0)}</p>
+                <div className="checkout-actions">
+                  <button type="button" className="btn-ghost" disabled={place.isPending} onClick={() => goTo(2)}><ArrowLeft size={15} aria-hidden="true" />Back</button>
+                  <button type="button" className="btn-primary" disabled={place.isPending || couponBlocks} onClick={() => place.mutate()}>
+                    Place order · <span className="tnum">₹{estimatedTotal}</span>
+                  </button>
+                </div>
+                {place.error && <p role="alert" className="inline-error">{place.error.message}</p>}
+              </StepPanel>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <aside className="checkout-summary" aria-labelledby="summary-title">
+          <h2 id="summary-title">Order summary</h2>
+          <table>
+            <thead><tr><th scope="col">Product</th><th scope="col">Qty</th><th scope="col">Price</th></tr></thead>
+            <tbody>
+              {cart.data.items.map(item => (
+                <tr key={item.id}>
+                  <td>{item.product.name}<small>{item.product.sku} · {[item.product.specifications?.Finish, item.product.specifications?.Configuration, item.product.specifications?.Protection].filter(Boolean).join(' · ')}</small></td>
+                  <td className="tnum">{item.quantity}</td>
+                  <td className="tnum">{rupees(Number(item.product.price) * item.quantity)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <dl className="summary-lines tnum">
+            <div><dt>Subtotal</dt><dd>{rupees(cart.data.subtotal)}</dd></div>
+            <div><dt>Shipping · {carrier}</dt><dd>₹{FEES[carrier]}</dd></div>
+            {applied?.valid && <div><dt>Discount</dt><dd>−{rupees(applied.discount_amount)}</dd></div>}
+            <div className="summary-lines__total"><dt>Estimated total</dt><dd>₹{estimatedTotal}</dd></div>
+          </dl>
+          <p className="summary-note">The final amount is calculated by the server when you place the order.</p>
+          <Link to="/cart" className="text-link">Edit cart</Link>
+        </aside>
+      </div>
+    </section>
+  );
 }
-

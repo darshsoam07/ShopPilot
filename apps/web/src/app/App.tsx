@@ -72,8 +72,9 @@ export default function App() {
         </nav>
       </footer>
     </div>
-    <CommandPalette key={user?.id ?? "guest"} isOpen={open} onClose={() => setOpen(false)} />
-    {user && <CartDrawer key={user.id} />}
+    <CommandPalette key={"palette-" + (user?.id ?? "guest")} isOpen={open} onClose={() => setOpen(false)} />
+    {user && <CartDrawer key={"cart-" + user.id} />}
     </SmoothScroll>
   );
 }
+

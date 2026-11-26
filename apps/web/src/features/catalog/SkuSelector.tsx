@@ -1,8 +1,6 @@
-// apps/web/src/features/catalog/SkuSelector.tsx
-import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "motion/react";
-import { ShoppingBag } from "lucide-react";
-import { SPRING_TACTILE } from "../../lib/motion";
+import { Link, useNavigate } from 'react-router-dom';
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { LAYOUT_ID, SPRING, TRANSITION } from '../../lib/motion';
 
 export interface ProductVariant {
   id: string | number;
@@ -15,104 +13,57 @@ export interface ProductVariant {
 interface SkuSelectorProps {
   variants: ProductVariant[];
   activeVariant: ProductVariant;
+  /** Runs before navigation so the page can prime its cache and focus target. */
   onSelect?: (variant: ProductVariant) => void;
-  onAddToBag: (variant: ProductVariant) => void;
-  isAdding?: boolean;
-  signedIn: boolean;
-  invalidQuantity: boolean;
 }
 
-export function SkuSelector({
-  variants,
-  activeVariant,
-  onSelect,
-  onAddToBag,
-  isAdding = false, signedIn, invalidQuantity,
-}: SkuSelectorProps) {
+const rupees = (value: number) => '₹' + value.toLocaleString('en-IN');
+
+/**
+ * Variants are real links, one URL each, so they work with middle-click, keyboard and assistive tech.
+ * A single variant renders nothing. The active indicator glides between options on one shared layoutId.
+ */
+export function SkuSelector({ variants, activeVariant, onSelect }: SkuSelectorProps) {
   const navigate = useNavigate();
   const outOfStock = activeVariant.stock <= 0;
-
-  const handlePick = (variant: ProductVariant) => {
-    if (variant.id === activeVariant.id) return;
-    onSelect?.(variant);
-    navigate(`/products/${variant.id}`, { replace: true });
-  };
+  const unique = variants.filter((variant, index) => variants.findIndex(other => other.id === variant.id) === index);
 
   return (
     <div className="sku-selector">
-      <div className="sku-selector__header">
-        <span className="sku-selector__label">Configuration</span>
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={activeVariant.id}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.16 }}
-            className="sku-selector__status font-mono-tabular"
-          >
-            {activeVariant.sku ? `${activeVariant.sku} · ` : ""}
-            <span className={activeVariant.stock > 5 ? "status-in-stock" : "status-low-stock"}>
-              {outOfStock ? "Sold Out" : `${activeVariant.stock} in stock`}
-            </span>
+      <p className="sku-selector__status">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span key={activeVariant.id + ':' + outOfStock} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={TRANSITION.hover}
+            className={outOfStock ? 'status-out-of-stock' : activeVariant.stock > 5 ? 'status-in-stock' : 'status-low-stock'}>
+            {outOfStock ? 'Sold out' : `${activeVariant.stock} in stock`}
           </motion.span>
         </AnimatePresence>
-      </div>
+      </p>
 
-      <div className="sku-grid" role="group" aria-label="Product variants">
-        {variants.map((variant) => {
-          const isSelected = variant.id === activeVariant.id;
-          return (
-            <button
-              key={variant.id}
-              type="button"
-              
-              aria-pressed={isSelected}
-              onClick={() => handlePick(variant)}
-              className={`sku-pill ${isSelected ? "is-selected" : ""}`}
-            >
-              {isSelected && (
-                <motion.span
-                  layoutId="active-sku-pill"
-                  transition={SPRING_TACTILE}
-                  className="sku-pill__bg"
-                />
-              )}
-              <span className="sku-pill__content">
-                <span className="sku-pill__name">{variant.label}</span>
-                <span className="sku-pill__price font-mono-tabular">
-                  ₹{variant.price.toLocaleString("en-IN")}
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <motion.button
-        type="button"
-        disabled={outOfStock || isAdding || invalidQuantity}
-        whileTap={outOfStock ? undefined : { scale: 0.98 }}
-        onClick={() => onAddToBag(activeVariant)}
-        className="btn-primary sku-selector__cta"
-      >
-        <span className="sku-selector__cta-left">
-          <ShoppingBag size={16} />
-          {outOfStock ? "Out of Stock" : isAdding ? "Adding..." : signedIn ? "Add to Bag" : "Sign in to add to bag"}
-        </span>
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={activeVariant.price}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.18 }}
-            className="font-mono-tabular"
-          >
-            ₹{activeVariant.price.toLocaleString("en-IN")}
-          </motion.span>
-        </AnimatePresence>
-      </motion.button>
+      {unique.length > 1 && (
+        <LayoutGroup id="sku-options">
+          <fieldset className="sku-options">
+            <legend>Configuration</legend>
+            {unique.map(variant => {
+              const active = variant.id === activeVariant.id;
+              const soldOut = variant.stock <= 0;
+              return (
+                <Link key={variant.id} to={`/products/${variant.id}`} replace aria-current={active ? 'page' : undefined}
+                  data-sold-out={soldOut || undefined}
+                  onClick={event => {
+                    event.preventDefault();
+                    if (active) return;
+                    onSelect?.(variant);
+                    navigate(`/products/${variant.id}`, { replace: true });
+                  }}>
+                  {active && <motion.span layoutId={LAYOUT_ID.skuPill} className="sku-options__pill" transition={SPRING.indicator} aria-hidden="true" />}
+                  <span className="sku-options__label">{variant.label}</span>
+                  <span className="sku-options__meta tnum">{soldOut ? 'Sold out' : rupees(variant.price)}</span>
+                </Link>
+              );
+            })}
+          </fieldset>
+        </LayoutGroup>
+      )}
     </div>
   );
 }

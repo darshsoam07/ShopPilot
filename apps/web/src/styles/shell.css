@@ -1,0 +1,265 @@
+/* Header, navigation and the small controls shared by the storefront. */
+@layer ui {
+  html { scroll-padding-top: var(--nav-height-compact); }
+
+  /* The header holds a fixed 72px of layout, so compressing never shifts the page.
+     Compression is one transform: the bar slides up by the difference, leaving 56px visible. */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    height: var(--nav-height);
+  }
+  .site-header__bar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--nav-height);
+    padding-top: calc(var(--nav-height) - var(--nav-height-compact));
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    transition: transform var(--dur-enter) var(--ease-in-out);
+  }
+  .site-header[data-compact="true"] .site-header__bar {
+    transform: translateY(calc(var(--nav-height-compact) - var(--nav-height)));
+  }
+  .site-header__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    height: var(--nav-height-compact);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--control);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .brand-mark { width: 10px; height: 10px; border-radius: 2px; background: var(--accent); }
+
+  .store-navigation { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-3); }
+
+  .main-nav { display: flex; align-items: center; gap: var(--space-1); }
+  .main-nav a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control);
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+  .main-nav a.active { color: var(--ink); }
+  .main-nav__bar {
+    position: absolute;
+    inset: auto var(--space-3) 6px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+  }
+  @media (hover: hover) and (pointer: fine) { .main-nav a:hover { color: var(--ink); } }
+
+  .header-actions { display: flex; align-items: center; gap: var(--space-3); }
+  .store-search input {
+    width: clamp(8.5rem, 12vw, 15rem);
+    min-width: 0;
+    min-height: var(--control);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-sm);
+    background: var(--paper-sunk);
+    font-size: var(--text-sm);
+  }
+  .header-ask,
+  .cart-link,
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--control);
+    padding-inline: var(--space-3);
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    transition: background-color var(--dur-hover) var(--ease-out), border-color var(--dur-hover) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .header-ask:hover, .cart-link:hover, .menu-toggle:hover { border-color: var(--ink); background: var(--paper-sunk); }
+  }
+  .header-ask { margin-inline-start: auto; }
+  @media (max-width: 479.98px) {
+    .header-ask { width: var(--control); justify-content: center; padding-inline: 0; }
+    .header-ask__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  .header-ask, .header-text-button, .cart-link, .menu-toggle, .header-cta, .header-user { white-space: nowrap; }
+  .header-text-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control);
+    padding-inline: var(--space-3);
+    border: 0;
+    background: transparent;
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+  .header-cta { min-height: var(--control); }
+  .header-user { font-size: var(--text-xs); color: var(--ink-muted); max-width: 10ch; overflow: hidden; text-overflow: ellipsis; }
+
+  .cart-count {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    padding-inline: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--ink-inverse);
+    font-size: var(--text-2xs);
+    font-weight: 500;
+    overflow: hidden;
+  }
+
+  .menu-toggle { display: none; }
+
+  @media (min-width: 1200px) {
+    .site-header[data-admin="true"] .site-header__row { gap: var(--space-3); }
+    .site-header[data-admin="true"] .main-nav { gap: 0; }
+    .site-header[data-admin="true"] .main-nav a { padding-inline: var(--space-2); }
+    .site-header[data-admin="true"] .main-nav__bar { inset: auto var(--space-2) 6px; }
+    .site-header[data-admin="true"] .header-actions { gap: var(--space-2); }
+    .site-header[data-admin="true"] .store-search input { width: 8rem; padding-inline: var(--space-3); }
+    .site-header[data-admin="true"] .header-user { display: none; }
+    .site-header[data-admin="true"] .header-text-button { padding-inline: var(--space-2); }
+    .site-header[data-admin="true"] .header-ask { padding-inline: var(--space-2); }
+    .site-header[data-admin="true"] .cart-link { padding-inline: var(--space-2); }
+  }
+
+  @media (max-width: 1199.98px) {
+    .menu-toggle { display: inline-flex; }
+    .store-navigation {
+      position: absolute;
+      top: 100%;
+      inset-inline: 0;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: var(--space-4);
+      max-height: calc(100dvh - var(--nav-height-compact));
+      overflow-y: auto;
+      padding: var(--space-4) var(--gutter) var(--space-6);
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity var(--dur-ui) var(--ease-out), transform var(--dur-ui) var(--ease-out), visibility 0s linear var(--dur-ui);
+    }
+    .store-navigation[data-expanded="true"] {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition-delay: 0s;
+    }
+    .main-nav { flex-direction: column; align-items: stretch; }
+    .main-nav a { padding-inline: 0; }
+    .main-nav__bar { inset: auto 0 6px; }
+    .header-actions { flex-direction: column; align-items: stretch; }
+    .store-search input { width: 100%; }
+    .header-text-button, .header-cta { justify-content: center; }
+  }
+
+  /* Shared controls */
+  .text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--control);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: var(--line-control);
+    text-underline-offset: 0.3em;
+    background: transparent;
+    border: 0;
+    transition: color var(--dur-hover) var(--ease-out), text-decoration-color var(--dur-hover) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .text-link:hover { color: var(--accent); text-decoration-color: currentColor; }
+  }
+
+  /* Browser-test hook on the header assistant button. Styling comes from .header-ask. */
+  .copilot-trigger { position: static; }
+
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: var(--control);
+    height: var(--control);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink);
+  }
+  @media (hover: hover) and (pointer: fine) { .icon-btn:hover { background: var(--paper-sunk); } }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    padding: 1px 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    color: var(--ink-muted);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+    min-height: var(--control);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color var(--dur-hover) var(--ease-out), color var(--dur-hover) var(--ease-out), border-color var(--dur-hover) var(--ease-out);
+  }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--ink-inverse); border-color: var(--ink); }
+  .chip__count { font-size: var(--text-xs); opacity: 0.7; }
+  .chip--active { background: var(--paper-sunk); border-color: var(--line-strong); }
+  @media (hover: hover) and (pointer: fine) {
+    .chip:hover:not([aria-pressed="true"]) { border-color: var(--ink); }
+  }
+
+  .segmented {
+    display: inline-flex;
+    padding: 2px;
+    border: 1px solid var(--line-control);
+    border-radius: var(--radius-sm);
+  }
+  .segmented button {
+    position: relative;
+    min-height: 2.5rem;
+    padding-inline: var(--space-3);
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+  .segmented__pill { position: absolute; inset: 0; border-radius: 3px; background: var(--ink); }
+  .segmented__label { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); transition: color var(--dur-hover) var(--ease-out); }
+  .segmented [aria-pressed="true"] .segmented__label { color: var(--ink-inverse); }
+}
